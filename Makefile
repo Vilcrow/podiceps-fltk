@@ -1,14 +1,14 @@
 CXX = g++
 CXXFLAGS = -Wall -g
 
-podiceps: PD_File.o main.o
+podiceps: PD_File.o PD_Handler.o main.o
 	$(CXX) $^ -o $@
 
 %.o: %.cxx
 	$(CXX) $(CXXFLAGS) -c $<
 
 clean:
-	rm -f *.o *~ deps.mk snake
+	rm -f *.o *~ deps.mk podiceps
 
 deps.mk: $(wildcard *.cpp) Makefile
 	$(CXX) -MM $(wildcard *.cxx) > $@

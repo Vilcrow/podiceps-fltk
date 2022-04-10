@@ -1,27 +1,24 @@
-class PD_Card;
+#ifndef PD_FILE_H_SENTRY
+#define PD_FILE_H_SENTRY
+
+enum { size_data = 11 };
+enum { max_string = 100 };
 
 class PD_File {
-	int fd;
+	FILE* fl;
 public:
-	PD_File() { fd = -1; } //file don't opened
-	bool OpenRO(const char *name) {
-		fd = open(name, O_RDONLY);
-		return (fd != -1);
-	}
-	bool OpenWO(const char *name) {
-		fd = open(name, O_WRONLY);
-		return (fd != -1);
-	}
-	bool OpenRW(const char *name) {
-		fd = open(name, O_RDWR);
-		return (fd != -1);
-	}
-	void Close() { if(fd != -1) close(fd); }
-	~PD_File() { if(fd != -1) close(fd); }
-	int GetFd() const { return fd; }
-	void AddString(PD_Card&);
+	PD_File() { fl = nullptr; } //file don't opened
+	~PD_File() { Close(); }
+	void OpenR(const char*); //mode "r"
+	void OpenRP(const char*); //mode "r+"
+	void OpenW(const char*); //mode "w"
+	void OpenWP(const char*); //mode "w+"
+	void OpenA(const char*); //mode "a"
+	void OpenAP(const char*); //mode "a+"
+	inline void Close() { fl = nullptr; if(fl) fclose(fl); }
+	inline FILE* GetFl() const { return fl; }
 private:
-	PD_File(const PD_File&) {} //can't copy
+	PD_File(const PD_File&) {}
 };
 
 class PD_String {
@@ -29,14 +26,12 @@ class PD_String {
 	int len;
 public:
 	enum { max = 100 };
-	//enum { o_bracket = "]", c_bracket = "[" };
 	inline char* GetString() const { return s; }
 	inline int GetLen() const { return len; }
 	PD_String() { s = new char[max]; s[0] = '\0'; len = 0; }
 	PD_String(PD_String&);
 	PD_String(const char* str) : PD_String() { *this = str; }
 	~PD_String() { if(s) delete[] s; }
-	int IsInString(const char*) const;
 	char& operator[](int);
 	PD_String& operator=(const char*);
 	PD_String& operator=(PD_String&);
@@ -57,19 +52,29 @@ private:
 class PD_Card {
 	PD_String* original; //word in original language
 	PD_String* translate;
-	int status;
+	int st; //status of word
+	char date[size_data];
 public:
 	enum { n, r }; //n - new word, r - remembered
-	PD_Card() : original(0), translate(0), status(0) {}
+	PD_Card() : original(nullptr), translate(nullptr), st(n) { date[0] = '\0'; }
 	PD_Card(PD_String* orl, PD_String* trl);
 	PD_Card(PD_String& orl, PD_String& trl);
 	PD_Card(char* orl, char* trl);
-	~PD_Card() {}
-	inline void SetOriginal(const char* str) { *original = str; }
-	inline void SetTranslate(const char* str) { *translate = str; }
-	inline void ChangeStatus() {if(status == n) status = r; else status = n; }
+	PD_Card(const char*); //constructor from full string
+	~PD_Card() {} //need fix
+	void SetOriginal(const char* );
+	void SetTranslate(const char* );
+	void SetDate(const char* str);
+	inline void ChangeStatus() {if(st == n) st = r; else st = n; }
 	inline char* GetOrlString() const { return original->GetString(); }
 	inline char* GetTrlString() const { return translate->GetString(); }
 	inline int GetOrlLen() const { return original->GetLen(); }
 	inline int GetTrlLen() const { return translate->GetLen(); }
+	inline int GetStatus() const { return st; }
+	inline const char* GetDate() const { return date; } //???
+	void PrintToFile(FILE*) const; //print string to specified stream
+private:
+	char* GetCurrentDate() const;
 };
+
+#endif
