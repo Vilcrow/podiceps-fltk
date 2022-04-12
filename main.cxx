@@ -6,6 +6,9 @@
 #include "PD_File.H"
 #include "PD_Handler.H"
 
+#define _(STR) (STR)
+#define N_(STR) (STR)
+
 int main(int argc, char** argv)
 {
 	if(argc == 1) {
