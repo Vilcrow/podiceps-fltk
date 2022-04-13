@@ -271,7 +271,8 @@ PD_Card::PD_Card(const char* string)
 		++i;
 		++j;
 	}
-	if(strcmp(tmp, "new"))
+	tmp[j] = '\0';
+	if(strcmp(tmp, status[0]) == 0)
 		st = n;
 	else
 		st = r;
@@ -334,23 +335,16 @@ char* PD_Card::MakeString() const
 	}
 	tmp[i++] = '|';
 	tmp[i++] = '{';
+	j = 0;
 	if(st == 0) { //need fix
-		tmp[i++] = 'n';
-		tmp[i++] = 'e';
-		tmp[i++] = 'w';
+		while(status[0][j]) {
+			tmp[i++] = status[0][j++];
+		}
 	}
-	else {
-		tmp[i++] = 'r';
-		tmp[i++] = 'e';
-		tmp[i++] = 'm';
-		tmp[i++] = 'e';
-		tmp[i++] = 'm';
-		tmp[i++] = 'b';
-		tmp[i++] = 'e';
-		tmp[i++] = 'r';
-		tmp[i++] = 'e';
-		tmp[i++] = 'd';
-	}
+	else
+		while(status[1][j]) {
+			tmp[i++] = status[0][j++];
+		}
 	tmp[i++] = '}';
 	j = 0;
 	tmp[i++] = '[';

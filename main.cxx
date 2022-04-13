@@ -16,7 +16,8 @@ int main(int argc, char** argv)
 	}
 	else {
 		int opt;
-		while((opt = getopt(argc, argv, "ha:d:O:T:S:")) != -1) {
+		opterr = 0;
+		while((opt = getopt(argc, argv, "ha:d:O:T:S:p:")) != -1) {
 			switch(opt) {
 			case 'h':
 				help_page();
@@ -34,10 +35,10 @@ int main(int argc, char** argv)
 				change_translate(optarg, argv[optind]);
 				exit(0);
 			case 'S':
-				change_status(optarg, argv[optind]);
+				change_status(optarg);
 				exit(0);
-			case 'v':
-				view_word();
+			case 'p':
+				show_words(optarg);
 				exit(0);
 			default:
 				help_page();

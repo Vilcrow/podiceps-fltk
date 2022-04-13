@@ -78,4 +78,9 @@ private:
 	char* GetCurrentDate() const; //format DD-MM-YYYY
 };
 
+//(original)|translate|{status}[date]
+class PD_FullString : public PD_String {
+public:
+};
+
 #endif

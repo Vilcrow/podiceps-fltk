@@ -131,7 +131,7 @@ void change_translate(const char* word, const char* new_translate)
 	}
 }
 
-void change_status(const char* word, const char* new_status)
+void change_status(const char* word)
 {
 	PD_File cur;
 	PD_File temp;
@@ -164,9 +164,26 @@ void change_status(const char* word, const char* new_status)
 	}
 }
 
-void view_word()
+void show_words(const char* pttr)
 {
-
+	PD_File cur;
+	cur.OpenR(TEST);
+	char buf[101];
+	bool done = false;
+	const char* orgnl;
+	while(fgets(buf, sizeof(buf), cur.GetFl())) {
+		PD_Card* card = new PD_Card(buf);
+		orgnl = card->GetOrlString();
+		if(is_match(orgnl, pttr)) {
+			show_word(buf);
+			done = true;
+		}
+		delete card;
+	}
+	if(!done) {
+		printf("Requested word don't exist in dictonary.\n");
+		exit(0);
+	}
 }
 
 bool find_by_original(const char* original, const char* string)
@@ -219,5 +236,39 @@ void put_new_string(const PD_Card str, const char* dest, const char* temp)
 	if(code != 0) {
 		printf("Renaming failed.\n");
 		exit(1);
+	}
+}
+
+void show_word(const char* string)
+{
+	PD_Card card(string);
+	const char* status;
+	status = card.GetStatus() ? "remembered" : "new";
+	printf("[%s] - [%s] - [%s] - [%s]\n", card.GetOrlString(),
+					card.GetTrlString(), status, card.GetDate());	
+}
+
+bool is_match(const char* string, const char* pattern)
+{
+	int i;
+	for(;; string++, pattern++) {
+		switch(*pattern) {
+			case 0:
+				return *string == 0;
+			case '*':
+				for(i = 0; ; i++) {
+					if(is_match(string+i, pattern+1))
+						return true;
+					if(!string[i])
+						return false;
+				}
+			case '?':
+				if(!*string)
+					return false;
+				break;
+			default:
+				if(*string != *pattern)
+					return false;
+		}
 	}
 }
