@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "PD_File.H"
-#include "PD_Handler.H"
+#include "DFile.H"
+#include "DHandler.H"
 
 #define _(STR) (STR)
 #define N_(STR) (STR)
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 				change_original(optarg, argv[optind]);
 				exit(0);
 			case 'T':
-				change_translate(optarg, argv[optind]);
+				change_translation(optarg, argv[optind]);
 				exit(0);
 			case 'S':
 				change_status(optarg);

@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -Wall -g
 
-podiceps: PD_File.o PD_Handler.o main.o
+podiceps: DFile.o DHandler.o main.o
 	$(CXX) $^ -o $@
 
 %.o: %.cxx
