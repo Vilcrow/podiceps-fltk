@@ -5,25 +5,22 @@
 #include <time.h>
 #include "DFile.H"
 
-const char ParsedStr::st_new[] = "new";
-const char ParsedStr::st_rem[] = "remembered";
+#define NEWST "remembered"
+#define REMST "new"
+
+char* paths[3];
 
 //class DFile
 void DFile::OpenR(const char* name)
 {
 	fl = fopen(name, "r");
 	if(!fl) {
-		perror(name); //need fix
-		exit(1);
-	}
-}
-
-void DFile::OpenRP(const char* name)
-{
-	fl = fopen(name, "r+");
-	if(!fl) {
-		perror(name); //need fix
-		exit(1);
+		fl = fopen(name, "w");
+		if(!fl) {
+			perror(name);
+			exit(1);
+		}
+		printf("Created new file.\n");
 	}
 }
 
@@ -31,114 +28,16 @@ void DFile::OpenW(const char* name)
 {
 	fl = fopen(name, "w");
 	if(!fl) {
-		perror(name); //need fix
+		perror(name);
 		exit(1);
 	}
 }
 
-void DFile::OpenWP(const char* name)
-{
-	fl = fopen(name, "w+");
-	if(!fl) {
-		perror(name); //need fix
-		exit(1);
-	}
-}
-
-void DFile::OpenA(const char* name)
-{
-	fl = fopen(name, "a");
-	if(!fl) {
-		perror(name); //need fix
-		exit(1);
-	}
-}
-
-void DFile::OpenAP(const char* name)
-{
-	fl = fopen(name, "a+");
-	if(!fl) {
-		perror(name); //need fix
-		exit(1);
-	}
-}
-//class SrcStr
-SrcStr::SrcStr(const char *s)
-{
-	str = new char[srclen];
-	strncpy(str, s, srclen);
-	if(str[srclen-1] != '\0') { //given too long string
-		str[srclen-1] = '\0';
-		//!!!print warning message
-	}
-}
-
-SrcStr::SrcStr(const SrcStr& s)
-{
-	str = new char[srclen];
-	strncpy(str, s.GetPtr(), srclen);
-	if(str[srclen-1] != '\0') { //given too long string
-		str[srclen-1] = '\0';
-		//!!!print warning message
-	}
-}
-
-void SrcStr::AddStringToFile(const char *destf, const char *tmpf)
-{
-	DFile dest;
-	DFile tmp;
-	dest.OpenR(destf);
-	tmp.OpenW(tmpf);
-	int cmp;
-	bool done = false;
-	char buf[srclen];
-	while(fgets(buf, sizeof(buf), dest.GetFl())) {
-		if(!done) {
-			cmp = strcmp(str, buf);
-			if(cmp < 0) {
-				fputs(str, tmp.GetFl());
-				fputs(buf, tmp.GetFl());
-				done = true;
-			}
-			else if(cmp == 0) {
-				printf("Duplicating a line.\n");
-				exit(1);
-			}
-			else
-				fputs(buf, tmp.GetFl());
-		}
-		else
-			fputs(buf, tmp.GetFl());
-	}
-	if(!done)
-		fputs(str, tmp.GetFl());
-	dest.Close();
-	tmp.Close();
-	int code;
-	code = rename(tmpf, destf);
-	if(code != 0) {
-		printf("Renaming failed.\n");
-		exit(1);
-	}
-}
-
-const SrcStr& SrcStr::operator=(const char *s)
-{
-	if(strlen(s) >= srclen) {
-		printf("Too long string.\n");
-		exit(1);
-	}
-	int i = 0;
-	while(s[i] != '\0') {
-		str[i] = s[i];
-		++i;
-	}
-	str[i] = '\0';
-	return *this;
-}
 //class ParsedStr
-ParsedStr::ParsedStr() : SrcStr()
+ParsedStr::ParsedStr()
 {
+	str = new char[srclen];
+	str[0] = '\0';
 	origl = new char[orglen];
 	origl[0] = '\0';
 	tranl = new char[trllen];
@@ -158,14 +57,9 @@ ParsedStr::ParsedStr(const char *s) : ParsedStr()
 	Parse(s);
 }
 
-ParsedStr::ParsedStr(const SrcStr& s) : ParsedStr()
-{
-	Parse(s.GetPtr());
-}
-
 ParsedStr::ParsedStr(const ParsedStr& s) : ParsedStr()
 {
-	Parse(s.GetPtr());
+	Parse(s.GetSrcStr());
 }
 
 void ParsedStr::Parse(const char *s)
@@ -233,12 +127,12 @@ void ParsedStr::ChangeTranslation(const char *ns)
 
 void ParsedStr::ChangeStatus()
 {
-	if(strcmp(status, st_new) == 0) {
-		strcpy(status, st_rem);
+	if(strcmp(status, NEWST) == 0) {
+		strcpy(status, REMST);
 		RefreshSourceString();
 	}
 	else {
-		strcpy(status, st_new);
+		strcpy(status, NEWST);
 		RefreshSourceString();
 	}
 }
@@ -291,12 +185,51 @@ bool ParsedStr::CmpByOriginal(const char *string) const
 	return (strcmp(origl, ps.GetOriginal()) ? false : true);
 }
 
-void ParsedStr::DeleteStringFromFile(const char *destf, const char *tmpf) const
+void ParsedStr::AddStringToFile() const
 {
 	DFile dest;
 	DFile tmp;
-	dest.OpenR(destf);
-	tmp.OpenW(tmpf);
+	dest.OpenR(paths[0]);
+	tmp.OpenW(paths[1]);
+	int cmp;
+	bool done = false;
+	char buf[srclen];
+	while(fgets(buf, sizeof(buf), dest.GetFl())) {
+		if(!done) {
+			cmp = strcmp(str, buf);
+			if(cmp < 0) {
+				fputs(str, tmp.GetFl());
+				fputs(buf, tmp.GetFl());
+				done = true;
+			}
+			else if(cmp == 0) {
+				printf("Duplicating a line.\n");
+				exit(1);
+			}
+			else
+				fputs(buf, tmp.GetFl());
+		}
+		else
+			fputs(buf, tmp.GetFl());
+	}
+	if(!done)
+		fputs(str, tmp.GetFl());
+	dest.Close();
+	tmp.Close();
+	int code;
+	code = rename(paths[1], paths[0]);
+	if(code != 0) {
+		printf("Renaming failed.\n");
+		exit(1);
+	}
+}
+
+void ParsedStr::DeleteStringFromFile() const
+{
+	DFile dest;
+	DFile tmp;
+	dest.OpenR(paths[0]);
+	tmp.OpenW(paths[1]);
 	char buf[srclen];
 	bool done = false;
 	while(fgets(buf, sizeof(buf), dest.GetFl())) {
@@ -316,19 +249,19 @@ void ParsedStr::DeleteStringFromFile(const char *destf, const char *tmpf) const
 		exit(1);
 	}
 	int code;
-	code = rename(tmpf, destf);
+	code = rename(paths[1], paths[0]);
 	if(code != 0) {
 		printf("Renaming failed.\n");
 		exit(1);
 	}
 }
 
-void ParsedStr::ReplaceByOriginalInFile(const char *destf, const char *tmpf)
+void ParsedStr::ReplaceByOriginalInFile()
 {
 	DFile dest;
 	DFile tmp;
-	dest.OpenR(destf);
-	tmp.OpenW(tmpf);
+	dest.OpenR(paths[0]);
+	tmp.OpenW(paths[1]);
 	char buf[srclen];
 	bool done = false;
 	while(fgets(buf, sizeof(buf), dest.GetFl())) {
@@ -348,7 +281,7 @@ void ParsedStr::ReplaceByOriginalInFile(const char *destf, const char *tmpf)
 	dest.Close();
 	tmp.Close();
 	int code;
-	code = rename(tmpf, destf);
+	code = rename(paths[1], paths[0]);
 	if(code != 0) {
 		printf("Renaming failed.\n");
 		exit(1);
@@ -420,6 +353,7 @@ ParsedStr::ParsedStr(const char *ostr, const char *tstr) : ParsedStr()
 }
 ParsedStr::~ParsedStr()
 {
+	delete[] str;
 	delete[] origl;
 	delete[] tranl;
 	delete[] status;
@@ -436,10 +370,10 @@ const ParsedStr& ParsedStr::operator=(const char *s)
 	return *this;
 }
 
-char* ParsedStr::FindByOriginal(const char *namef) const
+char* ParsedStr::FindByOriginal() const
 {
 	DFile tmp;
-	tmp.OpenR(namef);
+	tmp.OpenR(paths[0]);
 	char buf[srclen];
 	char *s = nullptr;
 	while(fgets(buf, sizeof(buf), tmp.GetFl())) {
@@ -454,5 +388,45 @@ char* ParsedStr::FindByOriginal(const char *namef) const
 	tmp.Close();
 	s = new char[srclen];
 	s[0] = '\0';
+	return s;
+}
+
+void ParsedStr::SetPaths()
+{
+	const char *const paths_end[] = { ".podic.txt", ".podictmp.txt", ".podic.txt.bak" };
+	char *s;
+	for(int i = 0; i < pathcnt; ++i) {
+		paths[i] = new char[pathlen];
+		s = FullPath(paths_end[i]);
+		strcpy(paths[i], s);
+		delete[] s;
+	}
+}
+
+char* ParsedStr::FullPath(const char *name)
+{
+	const char *hmp = getenv("HOME");
+	char fpath[pathlen];
+	strncpy(fpath, hmp, pathlen-1);
+	if(fpath[pathlen] != '\0') {
+		perror(name);
+		exit(1);
+	}
+	int i = 0;
+	while(fpath[i] != '\0' && i < pathlen-1) {
+		++i;
+	}
+	fpath[i++] = '/';
+	int j = 0;
+	while(name[j] != '\0' && i < pathlen-1) {
+		fpath[i++] = name[j++];
+	}
+	if(name[j] != '\0') {
+		perror(name);
+		exit(1);
+	}
+	fpath[i] = '\0';
+	char *s = new char[pathlen];
+	strcpy(s, fpath);
 	return s;
 }

@@ -13,5 +13,6 @@ void change_status(const char* word);
 void show_words(const char* pattr);
 void show_word(const char* string);
 bool is_match(const char* string, const char* pattern);
+void arg_handling(int argc, char **argv);
 
 #endif
