@@ -1,5 +1,24 @@
-#ifndef PD_FILE_H_SENTRY
-#define PD_FILE_H_SENTRY
+/*
+podiceps - pocket dictonary
+
+Copyright (C) 2022 S.V.I 'Vilcrow', <www.vilcrow.net>
+--------------------------------------------------------------------------------
+LICENCE:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+--------------------------------------------------------------------------------
+*/
+
+#ifndef DFILE_H_SENTRY
+#define DFILE_H_SENTRY
 
 class DFile {
 	FILE* fl;
@@ -13,15 +32,14 @@ public:
 private:
 	DFile(const DFile&) {} //no copying
 };
-//class ParsedStr
-//format: |original|translate|status|date
+
 class ParsedStr {
 	char *str;
 	char *origl;
 	char *tranl;
 	char *status;
 	char *date;
-	friend void show_words(const char *pttr);
+	friend void show_words(const char *pttr, const int rp); //need fix
 public:
 	enum { srclen = 105, pathlen = 256, pathcnt = 3 };
 	enum { orglen = 35, trllen = 35, stlen = 15, dtlen = 15, pcount = 4 };
@@ -32,14 +50,14 @@ public:
 	ParsedStr(const char *ostr, const char *tstr);
 	~ParsedStr();
 	inline const char* GetSrcStr() const { return str; }
- 	inline const char* GetOriginal() const { return origl; }
-	inline const char* GetTranslation() const { return tranl; }
-	inline const char* GetStatus() const { return status; }
-	inline const char* GetDate() const { return date; }
-	void ChangeOriginal(const char *ns);
-	void ChangeTranslation(const char *ns);
-	void ChangeStatus();
-	void ChangeDate(const char *ns);
+ 	inline const char* Original() const { return origl; }
+	inline const char* Translation() const { return tranl; }
+	inline const char* WStatus() const { return status; }
+	inline const char* Date() const { return date; }
+	void Original(const char *ns);
+	void Translation(const char *ns);
+	void WStatus(const char *ns);
+	void Date(const char *ns);
 	bool CmpByOriginal(const char *string) const;
 	void AddStringToFile() const;
 	void DeleteStringFromFile() const;

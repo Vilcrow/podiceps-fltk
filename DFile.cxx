@@ -1,3 +1,22 @@
+/*
+podiceps - pocket dictonary
+
+Copyright (C) 2022 S.V.I 'Vilcrow', <www.vilcrow.net>
+--------------------------------------------------------------------------------
+LICENCE:
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+--------------------------------------------------------------------------------
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,7 +67,7 @@ ParsedStr::ParsedStr()
 	date = new char[dtlen];
 	date[0] = '\0';
 	const char *d = GetCurrentDate();
-	ChangeDate(d);
+	Date(d);
 	delete[] d;
 }
 
@@ -86,7 +105,7 @@ void ParsedStr::Parse(const char *s)
 	while(s[i] != delimiter && j < stlen) {
 		status[j++] = s[i++];
 	}
-	status[i] = '\0';
+	status[j] = '\0';
 	j = 0;
 	++i;
 	while(s[i] != '\n' && j < dtlen) {
@@ -95,7 +114,7 @@ void ParsedStr::Parse(const char *s)
 	date[j] = '\0';
 }
 
-void ParsedStr::ChangeOriginal(const char *ns)
+void ParsedStr::Original(const char *ns)
 {
 	if(strlen(ns) >= orglen) {
 		printf("Too long string:\n%s", ns);
@@ -110,7 +129,7 @@ void ParsedStr::ChangeOriginal(const char *ns)
 	RefreshSourceString();
 }
 
-void ParsedStr::ChangeTranslation(const char *ns)
+void ParsedStr::Translation(const char *ns)
 {
 	if(strlen(ns) >= trllen) {
 		printf("Too long string:\n%s", ns);
@@ -125,19 +144,27 @@ void ParsedStr::ChangeTranslation(const char *ns)
 	RefreshSourceString();
 }
 
-void ParsedStr::ChangeStatus()
+void ParsedStr::WStatus(const char *ns)
 {
-	if(strcmp(status, NEWST) == 0) {
-		strcpy(status, REMST);
-		RefreshSourceString();
+	if(ns == nullptr) {
+		if(strcmp(status, NEWST) == 0) {
+			strcpy(status, REMST);
+			RefreshSourceString();
+		}
+		else {
+			strcpy(status, NEWST);
+			RefreshSourceString();
+		}
 	}
 	else {
-		strcpy(status, NEWST);
+		strncpy(status, ns, stlen);
+		if(status[stlen-1] != '\0')
+			status[stlen-1] = '\0';
 		RefreshSourceString();
 	}
 }
 
-void ParsedStr::ChangeDate(const char *ns)
+void ParsedStr::Date(const char *ns)
 {
 	if(strlen(ns) >= dtlen) {
 		printf("Too long string:\n%s", ns);
@@ -182,7 +209,7 @@ void ParsedStr::RefreshSourceString()
 bool ParsedStr::CmpByOriginal(const char *string) const
 {
 	ParsedStr ps(string);	
-	return (strcmp(origl, ps.GetOriginal()) ? false : true);
+	return (strcmp(origl, ps.Original()) ? false : true);
 }
 
 void ParsedStr::AddStringToFile() const
@@ -348,8 +375,8 @@ char* ParsedStr::GetCurrentDate() const //????
 
 ParsedStr::ParsedStr(const char *ostr, const char *tstr) : ParsedStr()
 {
-	ChangeOriginal(ostr);
-	ChangeTranslation(tstr);
+	Original(ostr);
+	Translation(tstr);
 }
 ParsedStr::~ParsedStr()
 {
@@ -378,7 +405,7 @@ char* ParsedStr::FindByOriginal() const
 	char *s = nullptr;
 	while(fgets(buf, sizeof(buf), tmp.GetFl())) {
 		ParsedStr ps(buf);
-		if(strcmp(origl, ps.GetOriginal()) == 0) {
+		if(strcmp(origl, ps.Original()) == 0) {
 			s = new char[srclen];
 			strcpy(s, buf);
 			tmp.Close();
@@ -408,7 +435,7 @@ char* ParsedStr::FullPath(const char *name)
 	const char *hmp = getenv("HOME");
 	char fpath[pathlen];
 	strncpy(fpath, hmp, pathlen-1);
-	if(fpath[pathlen] != '\0') {
+	if(fpath[pathlen-1] != '\0') {
 		perror(name);
 		exit(1);
 	}

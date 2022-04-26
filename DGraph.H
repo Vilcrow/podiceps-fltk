@@ -17,29 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
 */
 
-#include <FL/Fl.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Text_Display.H>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "DFile.H"
-#include "DHandler.H"
-#include "DGraph.H"
+#ifndef DGRAPH_H_SENTRY
+#define DGRAPH_H_SENTRY
 
-#define _(STR) (STR)
-#define N_(STR) (STR)
 
-int main(int argc, char** argv)
-{
-	ParsedStr::SetPaths();
-	if(argc == 1) {
-		start_GUI();
-	}
-	else {
-		const cl_arg *clarg = get_arguments(argc, argv);
-		handle_arguments(clarg);
-	}
-	return 0;
-}
+void start_GUI();
+void set_cb(Fl_Widget *w, void *user);
+void exit_cb(Fl_Widget *w, void *);
+void refresh_cb(Fl_Widget *w, void *);
+
+#endif
