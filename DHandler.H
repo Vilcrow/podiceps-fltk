@@ -23,6 +23,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #define TEST "files/test.txt"
 #define TEMP "files/temp.txt"
 
+class ParsedStr;
+class Fl_Widget;
+
 enum action { a_add, a_del, a_cor, a_show }; //what need to do
 enum reqpart { rp_origl, rp_tranl, rp_st, rp_dt }; //required part
 
@@ -31,6 +34,11 @@ struct cl_arg {
 	reqpart rp;
 	const char *arg1;	
 	const char *arg2;	
+};
+
+struct ps_item {
+	ParsedStr ps;
+	ps_item *next;
 };
 
 void help_page();
@@ -45,5 +53,13 @@ bool is_match(const char *string, const char *pattern);
 cl_arg* get_arguments(int argc, char **argv);
 void handle_arguments(const cl_arg *cla);
 int word_count();
+ps_item* ps_list();
+void sort_cb(Fl_Widget *w, void* user);
+ps_item* sort_orgl(ps_item* ps);
+ps_item* sort_trll(ps_item* ps);
+ps_item* sort_st(ps_item* ps);
+ps_item* sort_dt(ps_item* ps);
+void write_to_file(ps_item *ps);
+ps_item* reverse_list(ps_item *ps);
 
 #endif

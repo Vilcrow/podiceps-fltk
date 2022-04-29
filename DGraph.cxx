@@ -25,37 +25,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Table.H>
+#include <FL/Fl_Table_Row.H>
+#include <FL/Fl_Menu_Button.H>
 #include <FL/fl_draw.H>
 #include "DFile.H"
 #include "DHandler.H"
 #include "DGraph.H"
 
-class DTable;
 extern char *paths[3];
-
 static const char *colsname[] = { "Original", "Translation", "Status", "Date" };
-
-enum { 
-		border = 5,
-		button_w = 150,
-		button_h = 30,
-		font_size = 20,
-		input_w = 170,
-		input_h = 20,
-		option_w = 120,
-		option_h = 20,
-		rowcount = 4
-	 };
-
-enum act_n { add, del, chg, shw };
-
-struct controls {
-	Fl_Input *inpt[5];
-	Fl_Radio_Round_Button *rb[4];
-	Fl_Box *b[5];
-	Fl_Box *sbox;
-	DTable *tr;
-};
+bool reverse = false; //temporary global variable
 
 class DTable : public Fl_Table {
 protected:
@@ -64,6 +43,9 @@ public:
 	DTable(int x, int y, int w, int h, const char *l);
 	void SetSize(int nr);
 	~DTable() {}
+private:
+	static void event_callback(Fl_Widget *w, void *user);
+	void event_callback2();
 };
 
 DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
@@ -75,6 +57,50 @@ DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	row_header(0);
 	row_resize(0);
 	end();
+	callback(event_callback, (void*)this);
+}
+
+void DTable::event_callback(Fl_Widget *w, void *user)
+{
+	DTable *t = (DTable*)user;
+	t->event_callback2();
+}
+
+void DTable::event_callback2()
+{
+	int c = callback_col();
+	const int *pc = &c;
+	int tsize = word_count();
+	TableContext context = callback_context();
+	switch(context) {
+	case CONTEXT_COL_HEADER:
+		if(Fl::event() == FL_RELEASE && Fl::event_button() == 1) {
+			switch(c) {
+			case rp_origl:
+				sort_cb(this, (void*)pc);
+				SetSize(tsize);
+				reverse = !reverse;
+				break;
+			case rp_tranl:
+				sort_cb(this, (void*)pc);
+				SetSize(tsize);
+				reverse = !reverse;
+				break;
+			case rp_st:
+				sort_cb(this, (void*)pc);
+				SetSize(tsize);
+				reverse = !reverse;
+				break;
+			case rp_dt:
+				sort_cb(this, (void*)pc);
+				SetSize(tsize);
+				reverse = !reverse;
+				break;
+			}
+		}
+	default:
+		return;
+	}
 }
 
 void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
@@ -134,18 +160,22 @@ void DTable::SetSize(int nr)
 			case 0:
 				in->maximum_size(ParsedStr::orglen-1);
 				in->value(ps.Original());
+				in->readonly(1);
 				break;
 			case 1:
 				in->maximum_size(ParsedStr::trllen-1);
 				in->value(ps.Translation());
+				in->readonly(1);
 				break;
 			case 2:
 				in->maximum_size(ParsedStr::stlen-1);
 				in->value(ps.WStatus());
+				in->readonly(1);
 				break;
 			case 3:
 				in->maximum_size(ParsedStr::dtlen-1);
 				in->value(ps.Date());
+				in->readonly(1);
 				break;
 			}
 		}
@@ -157,53 +187,50 @@ void DTable::SetSize(int nr)
 
 void start_GUI()
 {
-	int win_w = 4*input_w + 2*border + 20;
+	int win_w = 4*input_w + 2*frame + 20;
 	int win_h = 600;
 	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, "podiceps");
+	Fl_Menu_Button *menu = new Fl_Menu_Button(0, 20, 640, 480);
+	menu->type(Fl_Menu_Button::POPUP3);
+	menu->add("Change", 0, exit_cb, (void*)"Change");
+	menu->add("Delete", 0, exit_cb, (void*)"Delete");
 	controls *ctrl = new controls;
-	const char *i_type[] = { "Original:", "Translation:", "Status:", "Date:", "New value:" };
+	const char *i_name[] = { "Original:", "Translation:" };
 	int i;
-	int y = border + input_h;
-	for(i = 0; i < 5; ++i) {
-		ctrl->b[i] = new Fl_Box(border, y-input_h, input_w+3*border, input_h, i_type[i]);
-		ctrl->inpt[i] = new Fl_Input(border, y, input_w+3*border, input_h);
-		y += border + 2*input_h;
+	int x = frame;
+	int y = frame;
+	for(i = 0; i < 2; ++i) {
+		ctrl->inptname[i] = new Fl_Box(x, y, input_w, input_h, i_name[i]);
+		y += input_h;
+		ctrl->inpt[i] = new Fl_Input(x, y, input_w+3*frame, input_h);
+		x += frame + input_w + dash_w;
+		y = frame;
 	}
-	ctrl->sbox = new Fl_Box(border, y, 3*input_w, input_h);
+	x = 3*frame + input_w;
+	y = frame + input_h;
+	ctrl->inptname[++i] = new Fl_Box(x, y, dash_w, dash_h, "-");
+	ctrl->inptname[i]->align(FL_ALIGN_CENTER);
 	ctrl->inpt[0]->maximum_size(ParsedStr::orglen-1);
 	ctrl->inpt[1]->maximum_size(ParsedStr::trllen-1);
-	ctrl->inpt[2]->maximum_size(ParsedStr::stlen-1);
-	ctrl->inpt[3]->maximum_size(ParsedStr::dtlen-1);
-	ctrl->inpt[4]->maximum_size(ParsedStr::orglen-1);
-	y = 2*border;
-	const char *act[] = { "add", "delete", "change", "find" };
-	for(i = 0; i < 4; ++i) {
-		ctrl->rb[i] = new Fl_Radio_Round_Button(5*border+input_w, y, option_w, option_h, act[i]);
-		y += option_h + border;
-	}
-	//start conditions
-	ctrl->rb[0]->set();
-	ctrl->inpt[2]->readonly(1);
-	ctrl->inpt[3]->readonly(1);
-	ctrl->inpt[4]->hide();
-	ctrl->b[4]->hide();
 	Fl_Button *b[2];
-	const char *btn[] = { "Set", "Quit"};
+	x = 8*frame + dash_w + 2*input_w;
+	y = input_h + frame;
+	const char *btn[] = { "Add", "Quit"};
 	for(i =0; i < 2; ++i) {
-		b[i] = new Fl_Button(5*border+input_w, y, button_w, button_h, btn[i]);
-		y += border + button_h;
+		b[i] = new Fl_Button(x, y, button_w, button_h, btn[i]);
+		x += frame + button_w;
 	}
-	b[0]->callback(set_cb, (void*)ctrl);
+	b[0]->callback(add_cb, (void*)ctrl);
 	b[1]->callback(exit_cb, 0);
-	for(i =0; i < 4; ++i) 
-		ctrl->rb[i]->callback(refresh_cb, (void*)ctrl);
-	//Fl_Text_Buffer *buf = new Fl_Text_Buffer;
-	ctrl->tr = new DTable(border, y, 4*input_w+20, 20*input_h);
+	y = 2*input_h + 2*frame;
+	ctrl->tr = new DTable(frame, y, 4*input_w+20, 20*input_h);
 	int tsize = word_count();
 	ctrl->tr->SetSize(tsize);
 	ctrl->tr->align(FL_ALIGN_CENTER);
+	ctrl->tr->selection_color(FL_YELLOW);
+	ctrl->tr->col_header(1);
+	ctrl->tr->when(FL_WHEN_RELEASE);
 	win->end();
-	//win->resizable(ctrl->tr);
 	win->show();
 	Fl::run();
 }
@@ -219,77 +246,18 @@ void exit_cb(Fl_Widget *w, void *)
 	w->hide();
 }
 
-void set_cb(Fl_Widget *w, void *user)
+void add_cb(Fl_Widget *w, void *user)
 {
 	controls *c = (controls*)user;
-	int i = 0;
-	while(c->rb[i]->value() == 0) {
-		++i;
-	}
-	switch(i) {
-	case add:
+	if(strcmp(c->inpt[0]->value(), "") != 0) {
 		add_word(c->inpt[0]->value(), c->inpt[1]->value());
-		break;
-	case del:
-		delete_word(c->inpt[0]->value());
-		break;
-	case chg:
-		if(strcmp(c->inpt[0]->value(), "") != 0){
-			if(strcmp(c->inpt[1]->value(), "") != 0)
-				change_translation(c->inpt[0]->value(), c->inpt[1]->value());
-			else if(strcmp(c->inpt[2]->value(), "") != 0)
-				change_status(c->inpt[0]->value(), c->inpt[2]->value());
-			else if(strcmp(c->inpt[4]->value(), "") != 0)
-				change_original(c->inpt[0]->value(), c->inpt[4]->value());
-		}
-		break;
-	case shw:
-		break;
-	}		
+		refresh_table(c);
+	}
 }
 
-void refresh_cb(Fl_Widget *w, void *user)
+void refresh_table(controls *c)
 {
-	controls *c = (controls*)user;
-	int i = 0;
-	while(c->rb[i]->value() == 0) {
-		++i;
-	}
-	switch(i) {
-	case add:
-		c->inpt[0]->readonly(0);
-		c->inpt[1]->readonly(0);
-		c->inpt[2]->readonly(1);
-		c->inpt[3]->readonly(1);
-		c->inpt[4]->value("");
-		c->inpt[4]->hide();
-		c->b[4]->hide();
-		break;	
-	case del:
-		c->inpt[0]->readonly(0);
-		c->inpt[1]->readonly(1);
-		c->inpt[2]->readonly(1);
-		c->inpt[3]->readonly(1);
-		c->inpt[4]->value("");
-		c->inpt[4]->hide();
-		c->b[4]->hide();
-		break;	
-	case chg:
-		c->inpt[0]->readonly(0);
-		c->inpt[1]->readonly(0);
-		c->inpt[2]->readonly(0);
-		c->inpt[3]->readonly(1);
-		c->inpt[4]->value("");
-		c->inpt[4]->show();
-		c->b[4]->show();
-		break;	
-	case shw:
-		c->inpt[0]->readonly(0);
-		c->inpt[1]->readonly(0);
-		c->inpt[2]->readonly(0);
-		c->inpt[3]->readonly(0);
-		c->inpt[4]->value("");
-		c->inpt[4]->hide();
-		c->b[4]->hide();
-	}	
+	int s = word_count();
+	c->tr->SetSize(s);
 }
+

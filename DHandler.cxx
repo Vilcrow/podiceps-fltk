@@ -25,6 +25,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DHandler.H"
 
 extern char *paths[3];
+extern bool reverse; //need to delete
 
 void help_page()
 {
@@ -260,4 +261,345 @@ int word_count()
 		++c;
 	}
 	return c;
+}
+
+ps_item* ps_list()
+{
+	DFile cur;
+	cur.OpenR(paths[0]);
+	char buf[ParsedStr::srclen];
+	ps_item *first = nullptr;
+	ps_item *tmp = nullptr;
+	while(fgets(buf, sizeof(buf), cur.GetFl())) {
+		if(first == nullptr) {
+			first = new ps_item;
+			first->next = nullptr;
+			tmp = first;
+		}
+		else {
+			tmp->next = new ps_item;
+			tmp = tmp->next;
+			tmp->next = nullptr;
+		}
+		tmp->ps = buf;
+	}
+	cur.Close();
+	return first;
+}
+
+void sort_cb(Fl_Widget *w, void* user)
+{
+	reqpart *rp = (reqpart*)user;
+	ps_item *first = ps_list();
+	switch(*rp) {
+	case rp_origl:
+		first = sort_orgl(first);
+		break;
+	case rp_tranl:
+		first = sort_trll(first);
+		break;
+	case rp_st:
+		first = sort_st(first);
+		break;
+	case rp_dt:
+		first = sort_dt(first);
+		break;
+	}
+	write_to_file(first);
+}
+
+ps_item* sort_orgl(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	if(reverse)
+		nf = reverse_list(nf);
+	return nf;
+}
+
+ps_item* sort_trll(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(strcmp(tmp->ps.Translation(), ntmp->ps.Translation()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else if(strcmp(tmp->ps.Translation(), ntmp->ps.Translation()) == 0) {
+				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+					if(ntmp->next == nullptr) {
+						ntmp->next = tmp;
+						tmp->next = nullptr;
+						done = true;
+					}
+					else {
+						ntmpp = ntmp;
+						ntmp = ntmp->next;
+					}
+				}
+				else {
+					tmp->next = ntmp;
+					if(ntmpp != ntmp)
+						ntmpp->next = tmp;
+					if(ntmp == nf)
+						nf = tmp;
+					done = true;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	if(reverse)
+		nf = reverse_list(nf);
+	return nf;
+}
+
+ps_item* sort_st(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(strcmp(tmp->ps.WStatus(), ntmp->ps.WStatus()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else if(strcmp(tmp->ps.WStatus(), ntmp->ps.WStatus()) == 0) {
+				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+					if(ntmp->next == nullptr) {
+						ntmp->next = tmp;
+						tmp->next = nullptr;
+						done = true;
+					}
+					else {
+						ntmpp = ntmp;
+						ntmp = ntmp->next;
+					}
+				}
+				else {
+					tmp->next = ntmp;
+					if(ntmpp != ntmp)
+						ntmpp->next = tmp;
+					if(ntmp == nf)
+						nf = tmp;
+					done = true;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	if(reverse)
+		nf = reverse_list(nf);
+	return nf;
+}
+
+ps_item* sort_dt(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(ParsedStr::CmpDates(tmp->ps.Date(), ntmp->ps.Date()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else if(ParsedStr::CmpDates(tmp->ps.Date(), ntmp->ps.Date())  == 0) {
+				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+					if(ntmp->next == nullptr) {
+						ntmp->next = tmp;
+						tmp->next = nullptr;
+						done = true;
+					}
+					else {
+						ntmpp = ntmp;
+						ntmp = ntmp->next;
+					}
+				}
+				else {
+					tmp->next = ntmp;
+					if(ntmpp != ntmp)
+						ntmpp->next = tmp;
+					if(ntmp == nf)
+						nf = tmp;
+					done = true;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	if(reverse)
+		nf = reverse_list(nf);
+	return nf;
+}
+
+void write_to_file(ps_item *ps)
+{
+	DFile cur;
+	cur.OpenW(paths[0]);
+	ps_item *tmp = ps;
+	while(ps != nullptr) {
+		fputs(ps->ps.GetSrcStr(), cur.GetFl());
+		tmp = ps;
+		ps = ps->next;
+		delete tmp;
+	}
+	cur.Close();
+}
+
+ps_item* reverse_list(ps_item *ps)
+{
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr; //first item in new list
+	while(ps != nullptr) {
+		tmp = ps;
+		ps = ps->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			tmp->next = nullptr;
+		}
+		else {
+			tmp->next = nf;
+			nf = tmp;	
+		}
+	}
+	return nf;
 }
