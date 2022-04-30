@@ -23,6 +23,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <time.h>
 #include "DFile.H"
+#include "DHandler.H"
 
 #define NEWST "remembered"
 #define REMST "new"
@@ -223,6 +224,15 @@ void ParsedStr::AddStringToFile() const
 	char buf[srclen];
 	while(fgets(buf, sizeof(buf), dest.GetFl())) {
 		if(!done) {
+			ParsedStr ps(buf);
+			cmp = strcmp(ps.Original(), Original());
+			if(cmp == 0) {
+				fputs(buf, tmp.GetFl());
+				printf("The word already exists:\n");
+				print_word(buf);
+				done = true;
+				continue;
+			}
 			cmp = strcmp(str, buf);
 			if(cmp < 0) {
 				fputs(str, tmp.GetFl());

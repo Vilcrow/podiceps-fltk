@@ -48,5 +48,8 @@ void start_GUI();
 void add_cb(Fl_Widget *w, void *user);
 void exit_cb(Fl_Widget *w, void *);
 void refresh_table(controls *c);
+void change_cb(Fl_Widget* w, void *user);
+void save_cb(Fl_Widget* w, void *user);
+void delete_cb(Fl_Widget* w, void *user);
 
 #endif

@@ -24,8 +24,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_Input.H>
+#include <FL/Fl_Output.H>
 #include <FL/Fl_Table.H>
-#include <FL/Fl_Table_Row.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/fl_draw.H>
 #include "DFile.H"
@@ -34,9 +34,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 extern char *paths[3];
 static const char *colsname[] = { "Original", "Translation", "Status", "Date" };
+static const char *submname[] = { "Change", "Save", "Delete" };
+
 bool reverse = false; //temporary global variable
 
 class DTable : public Fl_Table {
+	int cur_row;
+	int cur_col;
 protected:
 	void draw_cell(TableContext context, int r, int c, int x, int y, int w, int h);
 public:
@@ -44,7 +48,8 @@ public:
 	void SetSize(int nr);
 	~DTable() {}
 private:
-	static void event_callback(Fl_Widget *w, void *user);
+	static void event_callback(Fl_Widget *w, void *user)
+					{ ((DTable*)w)->event_callback2(); }
 	void event_callback2();
 };
 
@@ -58,12 +63,7 @@ DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	row_resize(0);
 	end();
 	callback(event_callback, (void*)this);
-}
-
-void DTable::event_callback(Fl_Widget *w, void *user)
-{
-	DTable *t = (DTable*)user;
-	t->event_callback2();
+	cur_row = cur_col = -1;
 }
 
 void DTable::event_callback2()
@@ -156,6 +156,7 @@ void DTable::SetSize(int nr)
 			int x, y, w, h;
 			find_cell(CONTEXT_TABLE, r, c, x, y, w, h);
 			Fl_Input *in = new Fl_Input(x, y, w, h);
+			in->box(FL_UP_BOX);
 			switch(c) {
 			case 0:
 				in->maximum_size(ParsedStr::orglen-1);
@@ -190,10 +191,6 @@ void start_GUI()
 	int win_w = 4*input_w + 2*frame + 20;
 	int win_h = 600;
 	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, "podiceps");
-	Fl_Menu_Button *menu = new Fl_Menu_Button(0, 20, 640, 480);
-	menu->type(Fl_Menu_Button::POPUP3);
-	menu->add("Change", 0, exit_cb, (void*)"Change");
-	menu->add("Delete", 0, exit_cb, (void*)"Delete");
 	controls *ctrl = new controls;
 	const char *i_name[] = { "Original:", "Translation:" };
 	int i;
@@ -230,6 +227,11 @@ void start_GUI()
 	ctrl->tr->selection_color(FL_YELLOW);
 	ctrl->tr->col_header(1);
 	ctrl->tr->when(FL_WHEN_RELEASE);
+	Fl_Menu_Button *menu = new Fl_Menu_Button(frame, y+input_h, 4*input_w+20, 20*input_h);
+	menu->type(Fl_Menu_Button::POPUP3);
+	menu->add(submname[0], 0, change_cb, (void*)ctrl);
+	menu->add(submname[1], 0, save_cb, (void*)ctrl);
+	menu->add(submname[2], 0, delete_cb, (void*)ctrl);
 	win->end();
 	win->show();
 	Fl::run();
@@ -261,3 +263,20 @@ void refresh_table(controls *c)
 	c->tr->SetSize(s);
 }
 
+void change_cb(Fl_Widget* w, void *user)
+{
+	controls *c = (controls*)user;
+	int row = c->tr->callback_row();
+	int col = c->tr->callback_col();
+	printf("Row: %d, Col: %d\n", row, col);
+}
+
+void save_cb(Fl_Widget* w, void *user)
+{
+
+}
+
+void delete_cb(Fl_Widget* w, void *user)
+{
+
+}
