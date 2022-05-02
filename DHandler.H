@@ -41,8 +41,13 @@ struct ps_item {
 	ps_item *next;
 };
 
+struct find_pattern {
+	const char *patt;
+	reqpart rp;
+};
+
 void help_page();
-void add_word(const char *ostr, const char *tstr);
+void add_word(const char *ostr, const char *tstr, const char *status = "new");
 void delete_word(const char *word);
 void change_original(const char *old_word, const char *new_word);
 void change_translation(const char *old_word, const char *new_word);
@@ -54,12 +59,12 @@ cl_arg* get_arguments(int argc, char **argv);
 void handle_arguments(const cl_arg *cla);
 int word_count();
 ps_item* ps_list();
-void sort_cb(Fl_Widget *w, void* user);
 ps_item* sort_orgl(ps_item* ps);
 ps_item* sort_trll(ps_item* ps);
 ps_item* sort_st(ps_item* ps);
 ps_item* sort_dt(ps_item* ps);
 void write_to_file(ps_item *ps);
 ps_item* reverse_list(ps_item *ps);
+void find_words(find_pattern *p);
 
 #endif

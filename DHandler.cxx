@@ -43,9 +43,11 @@ void help_page()
 	printf("Without arguments - To run GUI.\n"); 
 }
 
-void add_word(const char* ostr, const char* tstr)
+void add_word(const char* ostr, const char* tstr, const char *status)
 {
 	ParsedStr ps(ostr, tstr);
+	if(strcmp(status, "") != 0)
+		ps.WStatus(status);
 	ps.AddStringToFile();
 }
 
@@ -99,7 +101,7 @@ void show_words(const char* pttr, const enum reqpart rp)
 	DFile cur;
 	cur.OpenR(paths[0]);
 	char buf[ParsedStr::srclen];
-	char tmp[ParsedStr::orglen];
+	char tmp[ParsedStr::srclen];
 	bool done = false;
 	ParsedStr ps;
 	while(fgets(buf, sizeof(buf), cur.GetFl())) {
@@ -287,27 +289,6 @@ ps_item* ps_list()
 	return first;
 }
 
-void sort_cb(Fl_Widget *w, void* user)
-{
-	reqpart *rp = (reqpart*)user;
-	ps_item *first = ps_list();
-	switch(*rp) {
-	case rp_origl:
-		first = sort_orgl(first);
-		break;
-	case rp_tranl:
-		first = sort_trll(first);
-		break;
-	case rp_st:
-		first = sort_st(first);
-		break;
-	case rp_dt:
-		first = sort_dt(first);
-		break;
-	}
-	write_to_file(first);
-}
-
 ps_item* sort_orgl(ps_item *ps)
 {
 	ps_item *of = ps;
@@ -353,8 +334,6 @@ ps_item* sort_orgl(ps_item *ps)
 		}
 		done = false;
 	}
-	if(reverse)
-		nf = reverse_list(nf);
 	return nf;
 }
 
@@ -424,8 +403,6 @@ ps_item* sort_trll(ps_item *ps)
 		}
 		done = false;
 	}
-	if(reverse)
-		nf = reverse_list(nf);
 	return nf;
 }
 
@@ -495,8 +472,6 @@ ps_item* sort_st(ps_item *ps)
 		}
 		done = false;
 	}
-	if(reverse)
-		nf = reverse_list(nf);
 	return nf;
 }
 
@@ -566,8 +541,6 @@ ps_item* sort_dt(ps_item *ps)
 		}
 		done = false;
 	}
-	if(reverse)
-		nf = reverse_list(nf);
 	return nf;
 }
 
@@ -602,4 +575,43 @@ ps_item* reverse_list(ps_item *ps)
 		}
 	}
 	return nf;
+}
+
+void find_words(find_pattern *p)
+{
+	ps_item *first = ps_list();
+	ps_item *tmp = first;
+	ps_item *tmp_prev = tmp;
+	bool cmp;
+	while(tmp != nullptr) {
+		switch(p->rp) {
+		case rp_origl:
+			cmp = is_match(tmp->ps.Original(), p->patt);
+			break;
+		case rp_tranl:
+			cmp = is_match(tmp->ps.Translation(), p->patt);
+			break;
+		case rp_st:
+			cmp = is_match(tmp->ps.WStatus(), p->patt);
+			break;
+		case rp_dt:
+			cmp = is_match(tmp->ps.Date(), p->patt);
+			break;
+		}
+		if(cmp) {
+			if(tmp != first) {
+				tmp_prev->next = tmp->next;
+				tmp->next = first;
+				first = tmp;
+				tmp = tmp_prev->next;
+			}
+			else
+				tmp = tmp->next;
+		}
+		else {
+			tmp_prev = tmp;
+			tmp = tmp->next;
+		}
+	}
+	write_to_file(first);
 }
