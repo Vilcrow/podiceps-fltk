@@ -171,7 +171,7 @@ cl_arg* get_arguments(int argc, char **argv)
 	cl_arg *cla = new cl_arg;
 	int opt;
 	opterr = 0; //getopt doesn't print any messages
-	while((opt = getopt(argc, argv, "ha:d:O:T:S:o:t:s:D:")) != -1) {
+	while((opt = getopt(argc, argv, "ha:d:O:T:S:o:t:s:D:c")) != -1) {
 		switch(opt) {
 		case 'h':
 			help_page();
@@ -223,6 +223,9 @@ cl_arg* get_arguments(int argc, char **argv)
 			cla->rp = rp_dt;
 			cla->arg1 = optarg;
 			break;
+		case 'c':
+			printf("Total count: %d\n", word_count());
+			exit(0);
 		default:
 			help_page();
 			exit(1);
