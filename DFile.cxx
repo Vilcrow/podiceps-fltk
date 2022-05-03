@@ -23,6 +23,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <time.h>
 #include "DFile.H"
+#include "DHandler.H"
 
 #define NEWST "remembered"
 #define REMST "new"
@@ -223,6 +224,15 @@ void ParsedStr::AddStringToFile() const
 	char buf[srclen];
 	while(fgets(buf, sizeof(buf), dest.GetFl())) {
 		if(!done) {
+			ParsedStr ps(buf);
+			cmp = strcmp(ps.Original(), Original());
+			if(cmp == 0) {
+				fputs(buf, tmp.GetFl());
+				printf("The word already exists:\n");
+				print_word(buf);
+				done = true;
+				continue;
+			}
 			cmp = strcmp(str, buf);
 			if(cmp < 0) {
 				fputs(str, tmp.GetFl());
@@ -428,6 +438,53 @@ void ParsedStr::SetPaths()
 		strcpy(paths[i], s);
 		delete[] s;
 	}
+}
+
+const int ParsedStr::CmpDates(const char *d1, const char *d2)
+{
+	char date1[dtlen];
+	strncpy(date1, d1, dtlen);
+	if(date1[dtlen-1] != '\0')
+		date1[dtlen-1] = '\0';
+	DateToYMD(date1);
+	char date2[dtlen];
+	strncpy(date2, d2, dtlen);
+	if(date2[dtlen-1] != '\0')
+		date2[dtlen-1] = '\0';
+	DateToYMD(date2);
+	return strcmp(date1, date2);
+}
+
+void ParsedStr::DateToYMD(char *dt)
+{
+	char ndate[dtlen];
+	int i = 0;
+	int dash = 0;
+	while(dash < 2) {
+		if(dt[i++] == '-')
+			++dash;
+	}
+	int j = 0;
+	while(dt[i] != '\0') {
+		ndate[j++] = dt[i++];
+	}
+	ndate[j++] = '-';
+	i = 0;
+	dash = 0;
+	while(dash < 1) {
+		if(dt[i++] == '-')
+			++dash;
+	}
+	while(dt[i] != '-') {
+		ndate[j++] = dt[i++];
+	}
+	ndate[j++] = '-';
+	i = 0;
+	while(dt[i] != '-') {
+		ndate[j++] = dt[i++];
+	}
+	ndate[j++] = '\0';
+	strcpy(dt, ndate);
 }
 
 char* ParsedStr::FullPath(const char *name)

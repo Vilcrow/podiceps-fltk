@@ -25,6 +25,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DHandler.H"
 
 extern char *paths[3];
+extern bool reverse; //need to delete
 
 void help_page()
 {
@@ -42,9 +43,11 @@ void help_page()
 	printf("Without arguments - To run GUI.\n"); 
 }
 
-void add_word(const char* ostr, const char* tstr)
+void add_word(const char* ostr, const char* tstr, const char *status)
 {
 	ParsedStr ps(ostr, tstr);
+	if(strcmp(status, "") != 0)
+		ps.WStatus(status);
 	ps.AddStringToFile();
 }
 
@@ -98,7 +101,7 @@ void show_words(const char* pttr, const enum reqpart rp)
 	DFile cur;
 	cur.OpenR(paths[0]);
 	char buf[ParsedStr::srclen];
-	char tmp[ParsedStr::orglen];
+	char tmp[ParsedStr::srclen];
 	bool done = false;
 	ParsedStr ps;
 	while(fgets(buf, sizeof(buf), cur.GetFl())) {
@@ -260,4 +263,355 @@ int word_count()
 		++c;
 	}
 	return c;
+}
+
+ps_item* ps_list()
+{
+	DFile cur;
+	cur.OpenR(paths[0]);
+	char buf[ParsedStr::srclen];
+	ps_item *first = nullptr;
+	ps_item *tmp = nullptr;
+	while(fgets(buf, sizeof(buf), cur.GetFl())) {
+		if(first == nullptr) {
+			first = new ps_item;
+			first->next = nullptr;
+			tmp = first;
+		}
+		else {
+			tmp->next = new ps_item;
+			tmp = tmp->next;
+			tmp->next = nullptr;
+		}
+		tmp->ps = buf;
+	}
+	cur.Close();
+	return first;
+}
+
+ps_item* sort_orgl(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	return nf;
+}
+
+ps_item* sort_trll(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(strcmp(tmp->ps.Translation(), ntmp->ps.Translation()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else if(strcmp(tmp->ps.Translation(), ntmp->ps.Translation()) == 0) {
+				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+					if(ntmp->next == nullptr) {
+						ntmp->next = tmp;
+						tmp->next = nullptr;
+						done = true;
+					}
+					else {
+						ntmpp = ntmp;
+						ntmp = ntmp->next;
+					}
+				}
+				else {
+					tmp->next = ntmp;
+					if(ntmpp != ntmp)
+						ntmpp->next = tmp;
+					if(ntmp == nf)
+						nf = tmp;
+					done = true;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	return nf;
+}
+
+ps_item* sort_st(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(strcmp(tmp->ps.WStatus(), ntmp->ps.WStatus()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else if(strcmp(tmp->ps.WStatus(), ntmp->ps.WStatus()) == 0) {
+				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+					if(ntmp->next == nullptr) {
+						ntmp->next = tmp;
+						tmp->next = nullptr;
+						done = true;
+					}
+					else {
+						ntmpp = ntmp;
+						ntmp = ntmp->next;
+					}
+				}
+				else {
+					tmp->next = ntmp;
+					if(ntmpp != ntmp)
+						ntmpp->next = tmp;
+					if(ntmp == nf)
+						nf = tmp;
+					done = true;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	return nf;
+}
+
+ps_item* sort_dt(ps_item *ps)
+{
+	ps_item *of = ps;
+	if(of == nullptr)
+		return of;
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr;
+	ps_item *ntmp = nullptr;
+	ps_item *ntmpp = nullptr;
+	bool done = false;
+	while(of != nullptr) {
+		tmp = of;
+		of = of->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			nf->next = nullptr;
+			done = true;
+		}
+		else {
+			ntmp = nf;
+			ntmpp = nf;
+		}
+		while(!done) {
+			if(ParsedStr::CmpDates(tmp->ps.Date(), ntmp->ps.Date()) > 0) {
+				if(ntmp->next == nullptr) {
+					ntmp->next = tmp;
+					tmp->next = nullptr;
+					done = true;
+				}
+				else {
+					ntmpp = ntmp;
+					ntmp = ntmp->next;
+				}
+			}
+			else if(ParsedStr::CmpDates(tmp->ps.Date(), ntmp->ps.Date())  == 0) {
+				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
+					if(ntmp->next == nullptr) {
+						ntmp->next = tmp;
+						tmp->next = nullptr;
+						done = true;
+					}
+					else {
+						ntmpp = ntmp;
+						ntmp = ntmp->next;
+					}
+				}
+				else {
+					tmp->next = ntmp;
+					if(ntmpp != ntmp)
+						ntmpp->next = tmp;
+					if(ntmp == nf)
+						nf = tmp;
+					done = true;
+				}
+			}
+			else {
+				tmp->next = ntmp;
+				if(ntmpp != ntmp)
+					ntmpp->next = tmp;
+				if(ntmp == nf)
+					nf = tmp;
+				done = true;
+			}
+		}
+		done = false;
+	}
+	return nf;
+}
+
+void write_to_file(ps_item *ps)
+{
+	DFile cur;
+	cur.OpenW(paths[0]);
+	ps_item *tmp = ps;
+	while(ps != nullptr) {
+		fputs(ps->ps.GetSrcStr(), cur.GetFl());
+		tmp = ps;
+		ps = ps->next;
+		delete tmp;
+	}
+	cur.Close();
+}
+
+ps_item* reverse_list(ps_item *ps)
+{
+	ps_item *tmp = nullptr;
+	ps_item *nf = nullptr; //first item in new list
+	while(ps != nullptr) {
+		tmp = ps;
+		ps = ps->next;
+		if(nf == nullptr) {
+			nf = tmp;
+			tmp->next = nullptr;
+		}
+		else {
+			tmp->next = nf;
+			nf = tmp;	
+		}
+	}
+	return nf;
+}
+
+void find_words(find_pattern *p)
+{
+	ps_item *first = ps_list();
+	ps_item *tmp = first;
+	ps_item *tmp_prev = tmp;
+	bool cmp;
+	while(tmp != nullptr) {
+		switch(p->rp) {
+		case rp_origl:
+			cmp = is_match(tmp->ps.Original(), p->patt);
+			break;
+		case rp_tranl:
+			cmp = is_match(tmp->ps.Translation(), p->patt);
+			break;
+		case rp_st:
+			cmp = is_match(tmp->ps.WStatus(), p->patt);
+			break;
+		case rp_dt:
+			cmp = is_match(tmp->ps.Date(), p->patt);
+			break;
+		}
+		if(cmp) {
+			if(tmp != first) {
+				tmp_prev->next = tmp->next;
+				tmp->next = first;
+				first = tmp;
+				tmp = tmp_prev->next;
+			}
+			else
+				tmp = tmp->next;
+		}
+		else {
+			tmp_prev = tmp;
+			tmp = tmp->next;
+		}
+	}
+	write_to_file(first);
 }

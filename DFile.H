@@ -65,12 +65,14 @@ public:
 	const ParsedStr& operator=(const char *s);
 	char* FindByOriginal() const;
 	static void SetPaths();
+	static const int CmpDates(const char *d1, const char *d2);
 private:
 	void Parse(const char *s);
 	void RefreshSourceString();
 	char* GetCurrentDate() const;
 	bool IsCorrectString(const char *string);
 	static char* FullPath(const char *name);
+	static void DateToYMD(char *dt);
 };
 
 #endif

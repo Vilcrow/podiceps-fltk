@@ -23,6 +23,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #define TEST "files/test.txt"
 #define TEMP "files/temp.txt"
 
+class ParsedStr;
+class Fl_Widget;
+
 enum action { a_add, a_del, a_cor, a_show }; //what need to do
 enum reqpart { rp_origl, rp_tranl, rp_st, rp_dt }; //required part
 
@@ -33,8 +36,18 @@ struct cl_arg {
 	const char *arg2;	
 };
 
+struct ps_item {
+	ParsedStr ps;
+	ps_item *next;
+};
+
+struct find_pattern {
+	const char *patt;
+	reqpart rp;
+};
+
 void help_page();
-void add_word(const char *ostr, const char *tstr);
+void add_word(const char *ostr, const char *tstr, const char *status = "new");
 void delete_word(const char *word);
 void change_original(const char *old_word, const char *new_word);
 void change_translation(const char *old_word, const char *new_word);
@@ -45,5 +58,13 @@ bool is_match(const char *string, const char *pattern);
 cl_arg* get_arguments(int argc, char **argv);
 void handle_arguments(const cl_arg *cla);
 int word_count();
+ps_item* ps_list();
+ps_item* sort_orgl(ps_item* ps);
+ps_item* sort_trll(ps_item* ps);
+ps_item* sort_st(ps_item* ps);
+ps_item* sort_dt(ps_item* ps);
+void write_to_file(ps_item *ps);
+ps_item* reverse_list(ps_item *ps);
+void find_words(find_pattern *p);
 
 #endif
