@@ -17,36 +17,4 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
 */
 
-#ifndef DGRAPH_H_SENTRY
-#define DGRAPH_H_SENTRY
-
-class DTable;
-
-enum { 
-		frame = 5,
-		button_w = 80,
-		button_h = 20,
-		font_size = 20,
-		input_w = 170,
-		input_h = 20,
-		dash_w = 35,
-		dash_h = 20,
-		rowcount = 4
-	 };
-
-struct controls {
-	Fl_Input *inpt[5];
-	Fl_Button *b[6];
-	DTable *tr;
-};
-
-void start_GUI();
-void exit_cb(Fl_Widget *w, void *);
-void refresh_table(controls *c);
-void add_cb(Fl_Widget *w, void *user);
-void find_cb(Fl_Widget *w, void *user);
-void amend_cb(Fl_Widget *w, void *user);
-void delete_cb(Fl_Widget *w, void *user);
-void clear_cb(Fl_Widget *w, void *user);
-
-#endif
+#include "DError.H"

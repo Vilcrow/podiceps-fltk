@@ -17,17 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
 */
 
-#include <FL/Fl.H>
-#include <FL/Fl_Box.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Double_Window.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Radio_Round_Button.H>
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Output.H>
-#include <FL/Fl_Table_Row.H>
-#include <FL/Fl_Menu_Button.H>
 #include <FL/fl_draw.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Menu_Button.H>
+#include <FL/Fl_Output.H>
+#include <FL/Fl_Radio_Round_Button.H>
+#include <FL/Fl_Table_Row.H>
 #include "DFile.H"
 #include "DHandler.H"
 #include "DGraph.H"
@@ -87,7 +82,7 @@ int DTable::handle(int e)
 					char buf[ParsedStr::srclen];
 					cur.OpenR(paths[0]);
 					for(int i = 0; i <= r; ++i) {
-						fgets(buf, sizeof(buf), cur.GetFl());
+						fgets(buf, sizeof(buf), cur.Fl());
 					}
 					ParsedStr ps(buf);
 					ctrl->inpt[0]->value("");
@@ -138,62 +133,65 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 	dct.OpenR(paths[0]);
 	static char s[40];
 	char buf[ParsedStr::srclen];
+	char *opened;
 	for(int i = 0; i <= row; ++i) {
-		fgets(buf, sizeof(buf), dct.GetFl());
+		opened = fgets(buf, sizeof(buf), dct.Fl());
 	}
-	ParsedStr ps(buf);
-	switch(context) {
-	case CONTEXT_STARTPAGE:
-		fl_font(FL_HELVETICA, 12);
-		break;
-	case CONTEXT_RC_RESIZE:
-		for(int r = 0; r < rows(); ++r) {
-			for(int c = 0; c < cols(); ++c) {
-				if(index >= children())
-					break;
-				find_cell(CONTEXT_TABLE, r, c, x, y, w, h);
-				child(index++)->resize(x, y, w, h);
+	if(opened != NULL) {
+		ParsedStr ps(buf);
+		switch(context) {
+		case CONTEXT_STARTPAGE:
+			fl_font(FL_HELVETICA, 12);
+			break;
+		case CONTEXT_RC_RESIZE:
+			for(int r = 0; r < rows(); ++r) {
+				for(int c = 0; c < cols(); ++c) {
+					if(index >= children())
+						break;
+					find_cell(CONTEXT_TABLE, r, c, x, y, w, h);
+					child(index++)->resize(x, y, w, h);
+				}
 			}
-		}
-		init_sizes();
-		return;
-	case CONTEXT_COL_HEADER:
-		fl_push_clip(x, y, w, h);
-			fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, FL_BACKGROUND_COLOR);
-			fl_font(FL_HELVETICA | FL_BOLD, 12);
+			init_sizes();
+			return;
+		case CONTEXT_COL_HEADER:
+			fl_push_clip(x, y, w, h);
+				fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, FL_BACKGROUND_COLOR);
+				fl_font(FL_HELVETICA | FL_BOLD, 12);
+				fl_color(FL_BLACK);
+				sprintf(s, "%s", colsname[col]);
+				fl_draw(s, x, y, w, h, FL_ALIGN_CENTER);
+				if(col == last_col)
+					draw_sort_arrow(x, y, w, h);
+			fl_pop_clip();
+			return;
+		case CONTEXT_CELL: {
+			switch(col) {
+			case 0:
+				strncpy(buf, ps.Original(), ParsedStr::orglen);
+				break;
+			case 1:
+				strncpy(buf, ps.Translation(), ParsedStr::trllen);
+				break;
+			case 2:
+				strncpy(buf, ps.WStatus(), ParsedStr::stlen);
+				break;
+			case 3:
+				strncpy(buf, ps.Date(), ParsedStr::dtlen);
+				break;
+			}
+			int selected = row_selected(row);
+			fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, selected ? FL_YELLOW : FL_WHITE);
+			fl_push_clip(x, y, w, h);
+			fl_font(FL_HELVETICA, 14);
 			fl_color(FL_BLACK);
-			sprintf(s, "%s", colsname[col]);
-			fl_draw(s, x, y, w, h, FL_ALIGN_CENTER);
-			if(col == last_col)
-				draw_sort_arrow(x, y, w, h);
-		fl_pop_clip();
-		return;
-	case CONTEXT_CELL: {
-		switch(col) {
-		case 0:
-			strncpy(buf, ps.Original(), ParsedStr::orglen);
-			break;
-		case 1:
-			strncpy(buf, ps.Translation(), ParsedStr::trllen);
-			break;
-		case 2:
-			strncpy(buf, ps.WStatus(), ParsedStr::stlen);
-			break;
-		case 3:
-			strncpy(buf, ps.Date(), ParsedStr::dtlen);
-			break;
+			fl_draw(buf, x, y, w, h, FL_ALIGN_LEFT);
+			fl_pop_clip();
+			return;
 		}
-		int selected = row_selected(row);
-		fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, selected ? FL_YELLOW : FL_WHITE);
-		fl_push_clip(x, y, w, h);
-		fl_font(FL_HELVETICA, 14);
-		fl_color(FL_BLACK);
-		fl_draw(buf, x, y, w, h, FL_ALIGN_LEFT);
-		fl_pop_clip();
-		return;
-	}
-	default:
-		return;
+		default:
+			return;
+		}
 	}
 }
 

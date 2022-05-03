@@ -25,9 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DFile.H"
 #include "DHandler.H"
 
-#define NEWST "remembered"
-#define REMST "new"
-
 char* paths[3];
 
 //class DFile
@@ -148,12 +145,12 @@ void ParsedStr::Translation(const char *ns)
 void ParsedStr::WStatus(const char *ns)
 {
 	if(ns == nullptr) {
-		if(strcmp(status, NEWST) == 0) {
-			strcpy(status, REMST);
+		if(strcmp(status, "new") == 0) {
+			strcpy(status, "remembered");
 			RefreshSourceString();
 		}
 		else {
-			strcpy(status, NEWST);
+			strcpy(status, "new");
 			RefreshSourceString();
 		}
 	}
@@ -222,12 +219,12 @@ void ParsedStr::AddStringToFile() const
 	int cmp;
 	bool done = false;
 	char buf[srclen];
-	while(fgets(buf, sizeof(buf), dest.GetFl())) {
+	while(fgets(buf, sizeof(buf), dest.Fl())) {
 		if(!done) {
 			ParsedStr ps(buf);
 			cmp = strcmp(ps.Original(), Original());
 			if(cmp == 0) {
-				fputs(buf, tmp.GetFl());
+				fputs(buf, tmp.Fl());
 				printf("The word already exists:\n");
 				print_word(buf);
 				done = true;
@@ -235,8 +232,8 @@ void ParsedStr::AddStringToFile() const
 			}
 			cmp = strcmp(str, buf);
 			if(cmp < 0) {
-				fputs(str, tmp.GetFl());
-				fputs(buf, tmp.GetFl());
+				fputs(str, tmp.Fl());
+				fputs(buf, tmp.Fl());
 				done = true;
 			}
 			else if(cmp == 0) {
@@ -244,13 +241,13 @@ void ParsedStr::AddStringToFile() const
 				exit(1);
 			}
 			else
-				fputs(buf, tmp.GetFl());
+				fputs(buf, tmp.Fl());
 		}
 		else
-			fputs(buf, tmp.GetFl());
+			fputs(buf, tmp.Fl());
 	}
 	if(!done)
-		fputs(str, tmp.GetFl());
+		fputs(str, tmp.Fl());
 	dest.Close();
 	tmp.Close();
 	int code;
@@ -269,15 +266,15 @@ void ParsedStr::DeleteStringFromFile() const
 	tmp.OpenW(paths[1]);
 	char buf[srclen];
 	bool done = false;
-	while(fgets(buf, sizeof(buf), dest.GetFl())) {
+	while(fgets(buf, sizeof(buf), dest.Fl())) {
 		if(!done) {
 			if(!CmpByOriginal(buf))
-				fputs(buf, tmp.GetFl());
+				fputs(buf, tmp.Fl());
 			else
 				done = true;
 		}
 		else
-			fputs(buf, tmp.GetFl());
+			fputs(buf, tmp.Fl());
 	}
 	dest.Close();
 	tmp.Close();
@@ -301,19 +298,19 @@ void ParsedStr::ReplaceByOriginalInFile()
 	tmp.OpenW(paths[1]);
 	char buf[srclen];
 	bool done = false;
-	while(fgets(buf, sizeof(buf), dest.GetFl())) {
+	while(fgets(buf, sizeof(buf), dest.Fl())) {
 		if(!done) {
 			if(!CmpByOriginal(buf))
-				fputs(buf, tmp.GetFl());
+				fputs(buf, tmp.Fl());
 			else {
-				fputs(str, tmp.GetFl());	
+				fputs(str, tmp.Fl());	
 				strcpy(str, buf);
 				Parse(str);
 				done = true;
 			}
 		}
 		else
-			fputs(buf, tmp.GetFl());
+			fputs(buf, tmp.Fl());
 	}
 	dest.Close();
 	tmp.Close();
@@ -413,7 +410,7 @@ char* ParsedStr::FindByOriginal() const
 	tmp.OpenR(paths[0]);
 	char buf[srclen];
 	char *s = nullptr;
-	while(fgets(buf, sizeof(buf), tmp.GetFl())) {
+	while(fgets(buf, sizeof(buf), tmp.Fl())) {
 		ParsedStr ps(buf);
 		if(strcmp(origl, ps.Original()) == 0) {
 			s = new char[srclen];

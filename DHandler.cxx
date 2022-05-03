@@ -25,7 +25,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DHandler.H"
 
 extern char *paths[3];
-extern bool reverse; //need to delete
 
 void help_page()
 {
@@ -104,7 +103,7 @@ void show_words(const char* pttr, const enum reqpart rp)
 	char tmp[ParsedStr::srclen];
 	bool done = false;
 	ParsedStr ps;
-	while(fgets(buf, sizeof(buf), cur.GetFl())) {
+	while(fgets(buf, sizeof(buf), cur.Fl())) {
 		ps = buf;
 		switch(rp) {
 		case rp_origl:
@@ -262,7 +261,7 @@ int word_count()
 	dct.OpenR(paths[0]);
 	int c = 0;
 	char buf[ParsedStr::srclen];
-	while(fgets(buf, sizeof(buf), dct.GetFl())) {
+	while(fgets(buf, sizeof(buf), dct.Fl())) {
 		++c;
 	}
 	return c;
@@ -275,7 +274,7 @@ ps_item* ps_list()
 	char buf[ParsedStr::srclen];
 	ps_item *first = nullptr;
 	ps_item *tmp = nullptr;
-	while(fgets(buf, sizeof(buf), cur.GetFl())) {
+	while(fgets(buf, sizeof(buf), cur.Fl())) {
 		if(first == nullptr) {
 			first = new ps_item;
 			first->next = nullptr;
@@ -553,7 +552,7 @@ void write_to_file(ps_item *ps)
 	cur.OpenW(paths[0]);
 	ps_item *tmp = ps;
 	while(ps != nullptr) {
-		fputs(ps->ps.GetSrcStr(), cur.GetFl());
+		fputs(ps->ps.GetSrcStr(), cur.Fl());
 		tmp = ps;
 		ps = ps->next;
 		delete tmp;

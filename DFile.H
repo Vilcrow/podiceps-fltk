@@ -26,7 +26,7 @@ public:
 	DFile() { fl = nullptr; } //file don't opened
 	~DFile() { Close(); }
 	inline void Close() { if(fl) fclose(fl); fl = nullptr; }
-	inline FILE* GetFl() const { return fl; }
+	inline FILE* Fl() const { return fl; }
 	void OpenR(const char*); //mode "r"
 	void OpenW(const char*); //mode "w"
 private:
@@ -39,10 +39,9 @@ class ParsedStr {
 	char *tranl;
 	char *status;
 	char *date;
-	friend void show_words(const char *pttr, const int rp); //need fix
 public:
-	enum { srclen = 105, pathlen = 256, pathcnt = 3 };
-	enum { orglen = 35, trllen = 35, stlen = 15, dtlen = 15, pcount = 4 };
+	enum { orglen = 35, trllen = orglen*2, stlen = 15, dtlen = 15, pcount = 4 };
+	enum { srclen = orglen+trllen+stlen+dtlen+pcount+1, pathlen = 256, pathcnt = 3 };
 	enum { delimiter = '|' };
 	ParsedStr();
 	ParsedStr(const char *s);
@@ -72,7 +71,7 @@ private:
 	char* GetCurrentDate() const;
 	bool IsCorrectString(const char *string);
 	static char* FullPath(const char *name);
-	static void DateToYMD(char *dt);
+	static void DateToYMD(char *dt); //convert date to YYYY-MM-DD format
 };
 
 #endif

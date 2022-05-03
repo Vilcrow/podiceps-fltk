@@ -18,12 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <FL/Fl.H>
-#include <FL/Fl_Window.H>
+#include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_Text_Display.H>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Window.H>
 #include "DFile.H"
 #include "DHandler.H"
 #include "DGraph.H"

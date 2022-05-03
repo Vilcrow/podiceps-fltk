@@ -20,23 +20,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef DHANDLER_H_SENTRY
 #define DHANDLER_H_SENTRY
 
-#define TEST "files/test.txt"
-#define TEMP "files/temp.txt"
-
-class ParsedStr;
-class Fl_Widget;
-
 enum action { a_add, a_del, a_cor, a_show }; //what need to do
 enum reqpart { rp_origl, rp_tranl, rp_st, rp_dt }; //required part
 
-struct cl_arg {
+struct cl_arg {	//command line argumets
 	action act;
 	reqpart rp;
 	const char *arg1;	
 	const char *arg2;	
 };
 
-struct ps_item {
+struct ps_item { //list of ParsedStr
 	ParsedStr ps;
 	ps_item *next;
 };
