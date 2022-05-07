@@ -17,4 +17,57 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
 */
 
+#include <string.h>
+#include <errno.h>
 #include "DError.H"
+
+char* strcopy(const char *str)
+{
+	char *res = new char[strlen(str)+1];
+	strcpy(res, str);
+	return res;
+}
+
+ExternalError::ExternalError()
+{
+	err_code = errno;
+}
+
+FileError::FileError(const char *fn, const char *cm) : ExternalError()
+{
+	filename = strcopy(fn);
+	comment = strcopy(cm);
+}
+
+FileError::~FileError()
+{
+	delete [] filename;
+	delete [] comment;
+}
+
+FileError::FileError(const FileError& other)
+{
+	err_code = other.err_code;
+	filename = strcopy(other.filename);
+	comment = strcopy(other.comment);
+}
+
+InputError::InputError(int ec, const char *str, const char *cm)
+{
+	err_code = ec;
+	string = strcopy(str);
+	comment = strcopy(cm);
+}
+
+InputError::~InputError()
+{
+	delete [] string;
+	delete [] comment;
+}
+
+InputError::InputError(const InputError& other)
+{
+	err_code = other.err_code;
+	string = strcopy(other.string);
+	comment = strcopy(other.comment);
+}

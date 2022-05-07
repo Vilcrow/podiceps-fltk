@@ -29,6 +29,7 @@ public:
 	inline FILE* Fl() const { return fl; }
 	void OpenR(const char*); //mode "r"
 	void OpenW(const char*); //mode "w"
+	void OpenA(const char*); //mode "a"
 private:
 	DFile(const DFile&) {} //no copying
 };
@@ -65,13 +66,15 @@ public:
 	char* FindByOriginal() const;
 	static void SetPaths();
 	static const int CmpDates(const char *d1, const char *d2);
+	static bool IsCorrectString(const char *s);
 private:
 	void Parse(const char *s);
 	void RefreshSourceString();
 	char* GetCurrentDate() const;
-	bool IsCorrectString(const char *string);
 	static char* FullPath(const char *name);
 	static void DateToYMD(char *dt); //convert date to YYYY-MM-DD format
 };
+
+void make_bak_file();
 
 #endif

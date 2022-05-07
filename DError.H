@@ -20,13 +20,47 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef DERROR_H_SENTRY
 #define DERROR_H_SENTRY
 
+char *strcopy(const char *str);
+
 class DError {
+
+};
+
+class UserError : public DError {
+
+};
+
+class InputError : public UserError {
 	int err_code;
+	char *string;
+	char *comment;
+public:
+	InputError(int ec, const char *str, const char *cm);
+	~InputError();
+	InputError(const InputError& other);
+	inline const char *String() const { return string; }
+	inline const char *Comment() const { return comment; }
+	inline int Errno() const { return err_code; }
+};
+
+class ExternalError : public DError {
+public:
+	ExternalError();
+	~ExternalError() {}
+protected:
+	int err_code;
+};
+
+class FileError : public ExternalError {
 	char *filename;
 	char *comment;
 public:
-	DError(int, char*, char*);
-	~DError();
+	FileError(const char* fn, const char* cm);
+	~FileError();
+	FileError(const FileError& other);
+	inline const char *Name() const { return filename; }
+	inline const char *Comment() const { return comment; }
+	inline int Errno() const { return err_code; }
 };
 
 #endif

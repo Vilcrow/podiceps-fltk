@@ -26,6 +26,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DFile.H"
 #include "DHandler.H"
 #include "DGraph.H"
+#include "DError.H"
 
 extern char *paths[3];
 static const char *colsname[] = { "Original", "Translation", "Status", "Date" };
@@ -222,7 +223,7 @@ void start_GUI()
 {
 	Fl::option(Fl::OPTION_ARROW_FOCUS, 0);
 	int win_w = 4*input_w + 2*frame + 20;
-	int win_h = 600;
+	int win_h = 5*frame + 26*input_h;
 	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, "podiceps");
 	int x = frame;
 	int y = frame;
@@ -249,6 +250,9 @@ void start_GUI()
 		ctrl->b[i]->box(FL_PLASTIC_UP_BOX);
 		x += frame + button_w;
 	}
+	y += frame + 2*input_h;
+	ctrl->msg = new Fl_Output(frame, y, 4*input_w, input_h);
+	ctrl->msg->box(FL_FLAT_BOX);
 	ctrl->b[0]->callback(add_cb, (void*)ctrl);
 	ctrl->b[0]->tooltip("Add new word\n'Enter'");
 	ctrl->b[0]->shortcut(FL_Enter);
@@ -293,10 +297,19 @@ void DTable::Refresh()
 void add_cb(Fl_Widget *w, void *user)
 {
 	controls *c = (controls*)user;
-	if(strcmp(c->inpt[0]->value(), "") != 0) {
-		add_word(c->inpt[0]->value(), c->inpt[1]->value(), c->inpt[2]->value());
-		c->tr->Refresh();
+	try {
+		if(strcmp(c->inpt[0]->value(), "") != 0) {
+			add_word(c->inpt[0]->value(), c->inpt[1]->value(), c->inpt[2]->value());
+			c->tr->Refresh();
+			c->msg->value("");
+		}
+		else
+			c->msg->value("Enter the word");
 	}
+	catch(const InputError &ie) {
+		c->msg->value(ie.Comment());
+	}
+	c->inpt[0]->take_focus();
 }
 
 void find_cb(Fl_Widget *w, void *user)
@@ -319,7 +332,13 @@ void find_cb(Fl_Widget *w, void *user)
 		p->patt = c->inpt[3]->value();
 		p->rp = rp_dt;
 	}
-	find_words(p);
+	try {
+		find_words(p);
+		c->msg->value("");
+	}
+	catch(const InputError &ie) {
+		c->msg->value(ie.Comment());
+	}
 	c->tr->redraw();
 	c->inpt[0]->take_focus();
 }
@@ -327,25 +346,42 @@ void find_cb(Fl_Widget *w, void *user)
 void amend_cb(Fl_Widget *w, void *user)
 {
 	controls *c = (controls*)user;
-	if(strcmp(c->inpt[0]->value(), "") != 0) {
-		if(strcmp(c->inpt[4]->value(), "") != 0) {
-			change_original(c->inpt[0]->value(), c->inpt[4]->value());
-			c->inpt[0]->value(c->inpt[4]->value());
-			c->inpt[4]->value("");
+	try {
+		if(strcmp(c->inpt[0]->value(), "") != 0) {
+			if(strcmp(c->inpt[4]->value(), "") != 0) {
+				change_original(c->inpt[0]->value(), c->inpt[4]->value());
+				c->inpt[0]->value(c->inpt[4]->value());
+				c->inpt[4]->value("");
+			}
+			if(strcmp(c->inpt[1]->value(), "") != 0)
+				change_translation(c->inpt[0]->value(), c->inpt[1]->value());
+			if(strcmp(c->inpt[2]->value(), "") != 0)
+				change_status(c->inpt[0]->value(), c->inpt[2]->value());
+			c->tr->Refresh();
+			c->msg->value("");
+			c->inpt[0]->take_focus();
 		}
-		change_translation(c->inpt[0]->value(), c->inpt[1]->value());
-		change_status(c->inpt[0]->value(), c->inpt[2]->value());
 	}
-	c->tr->Refresh();
+	catch(const InputError &ie) {
+		c->msg->value(ie.Comment());
+	}
+	c->inpt[0]->take_focus();
 }
 
 void delete_cb(Fl_Widget *w, void *user)
 {
 	controls *c = (controls*)user;
-	if(strcmp(c->inpt[0]->value(), "") != 0) {
-		delete_word(c->inpt[0]->value());
-		c->tr->Refresh();
+	try {
+		if(strcmp(c->inpt[0]->value(), "") != 0) {
+			delete_word(c->inpt[0]->value());
+			c->tr->Refresh();
+			c->msg->value("");
+		}
 	}
+	catch(const InputError &ie) {
+		c->msg->value(ie.Comment());
+	}
+	c->inpt[0]->take_focus();
 }
 
 void clear_cb(Fl_Widget *w, void *user)
@@ -354,6 +390,7 @@ void clear_cb(Fl_Widget *w, void *user)
 	for(int i = 0; i < 5; ++i) {
 		c->inpt[i]->value("");
 	}
+	c->msg->value("");
 	c->inpt[0]->take_focus();
 }
 

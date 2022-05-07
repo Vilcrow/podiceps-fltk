@@ -24,6 +24,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <time.h>
 #include "DFile.H"
 #include "DHandler.H"
+#include "DError.H"
 
 char* paths[3];
 
@@ -33,10 +34,8 @@ void DFile::OpenR(const char* name)
 	fl = fopen(name, "r");
 	if(!fl) {
 		fl = fopen(name, "w");
-		if(!fl) {
-			perror(name);
-			exit(1);
-		}
+		if(!fl)
+			throw FileError(name, "Couldn't open.");
 		printf("Created new file.\n");
 	}
 }
@@ -44,10 +43,15 @@ void DFile::OpenR(const char* name)
 void DFile::OpenW(const char* name)
 {
 	fl = fopen(name, "w");
-	if(!fl) {
-		perror(name);
-		exit(1);
-	}
+	if(!fl)
+		throw FileError(name, "Couldn't open.");
+}
+
+void DFile::OpenA(const char* name)
+{
+	fl = fopen(name, "a");
+	if(!fl)
+		throw FileError(name, "Couldn't open.");
 }
 
 //class ParsedStr
@@ -81,10 +85,8 @@ ParsedStr::ParsedStr(const ParsedStr& s) : ParsedStr()
 
 void ParsedStr::Parse(const char *s)
 {
-	if(!IsCorrectString(s)) {
-		printf("Incorrect string:\n%s", s);
-		exit(1);
-	}
+	if(!IsCorrectString(s))
+		throw InputError(1, s, "Incorrect string");
 	strcpy(str, s);
 	int i = 1;
 	int j = 0;
@@ -114,10 +116,8 @@ void ParsedStr::Parse(const char *s)
 
 void ParsedStr::Original(const char *ns)
 {
-	if(strlen(ns) >= orglen) {
-		printf("Too long string:\n%s", ns);
-		exit(1);
-	}
+	if(strlen(ns) >= orglen)
+		throw InputError(2, ns, "Too long string");
 	int i = 0;
 	while(ns[i] != '\0') {
 		origl[i] = ns[i];
@@ -129,10 +129,8 @@ void ParsedStr::Original(const char *ns)
 
 void ParsedStr::Translation(const char *ns)
 {
-	if(strlen(ns) >= trllen) {
-		printf("Too long string:\n%s", ns);
-		exit(1);
-	}
+	if(strlen(ns) >= trllen)
+		throw InputError(2, ns, "Too long string");
 	int i = 0;
 	while(ns[i] != '\0') {
 		tranl[i] = ns[i];
@@ -164,10 +162,8 @@ void ParsedStr::WStatus(const char *ns)
 
 void ParsedStr::Date(const char *ns)
 {
-	if(strlen(ns) >= dtlen) {
-		printf("Too long string:\n%s", ns);
-		exit(1);
-	}
+	if(strlen(ns) >= dtlen)
+		throw InputError(2, ns, "Too long string");
 	int i = 0;
 	while(ns[i] != '\0') {
 		date[i] = ns[i];
@@ -210,52 +206,31 @@ bool ParsedStr::CmpByOriginal(const char *string) const
 	return (strcmp(origl, ps.Original()) ? false : true);
 }
 
-void ParsedStr::AddStringToFile() const
+void ParsedStr::AddStringToFile() const //exception handling, need fix
 {
-	DFile dest;
-	DFile tmp;
-	dest.OpenR(paths[0]);
-	tmp.OpenW(paths[1]);
+	if(!IsCorrectString(GetSrcStr()))
+		throw InputError(1, GetSrcStr(), "Incorrect string");
 	int cmp;
-	bool done = false;
 	char buf[srclen];
+	bool is = false; //word already exists in file?
+	DFile dest;
+	dest.OpenR(paths[0]);
 	while(fgets(buf, sizeof(buf), dest.Fl())) {
-		if(!done) {
-			ParsedStr ps(buf);
-			cmp = strcmp(ps.Original(), Original());
-			if(cmp == 0) {
-				fputs(buf, tmp.Fl());
-				printf("The word already exists:\n");
-				print_word(buf);
-				done = true;
-				continue;
-			}
-			cmp = strcmp(str, buf);
-			if(cmp < 0) {
-				fputs(str, tmp.Fl());
-				fputs(buf, tmp.Fl());
-				done = true;
-			}
-			else if(cmp == 0) {
-				printf("Duplicating a line.\n");
-				exit(1);
-			}
-			else
-				fputs(buf, tmp.Fl());
+		ParsedStr ps(buf);
+		cmp = strcmp(ps.Original(), Original());
+		if(cmp == 0) {
+			is = true;
+			break;
 		}
-		else
-			fputs(buf, tmp.Fl());
 	}
-	if(!done)
-		fputs(str, tmp.Fl());
 	dest.Close();
-	tmp.Close();
-	int code;
-	code = rename(paths[1], paths[0]);
-	if(code != 0) {
-		printf("Renaming failed.\n");
-		exit(1);
+	if(!is) {
+		dest.OpenA(paths[0]);
+		fputs(str, dest.Fl());
+		dest.Close();
 	}
+	else
+		throw InputError(5, Original(), "The word already exists");
 }
 
 void ParsedStr::DeleteStringFromFile() const
@@ -278,16 +253,12 @@ void ParsedStr::DeleteStringFromFile() const
 	}
 	dest.Close();
 	tmp.Close();
-	if(!done) {
-		printf("The word don't exist.\n");
-		exit(1);
-	}
+	if(!done)
+		throw InputError(4, Original(), "The word don't exist");
 	int code;
 	code = rename(paths[1], paths[0]);
-	if(code != 0) {
-		printf("Renaming failed.\n");
-		exit(1);
-	}
+	if(code != 0)
+		throw FileError(paths[1], "Renaming failed");
 }
 
 void ParsedStr::ReplaceByOriginalInFile()
@@ -316,14 +287,10 @@ void ParsedStr::ReplaceByOriginalInFile()
 	tmp.Close();
 	int code;
 	code = rename(paths[1], paths[0]);
-	if(code != 0) {
-		printf("Renaming failed.\n");
-		exit(1);
-	}
-	if(!done) {
-		printf("The word don't exist.\n");
-		exit(1);
-	}
+	if(code != 0)
+		throw FileError(paths[1], "Renaming failed");
+	if(!done)
+		throw InputError(4, Original(), "The word don't exist");
 }
 
 bool ParsedStr::IsCorrectString(const char *string)
@@ -396,10 +363,8 @@ ParsedStr::~ParsedStr()
 
 const ParsedStr& ParsedStr::operator=(const char *s)
 {
-	if(strlen(s) >= srclen) {
-		printf("Too long string.\n");
-		exit(1);
-	}
+	if(strlen(s) >= srclen)
+		throw InputError(2, s, "Too long string");
 	Parse(s);
 	return *this;
 }
@@ -421,7 +386,7 @@ char* ParsedStr::FindByOriginal() const
 	}
 	tmp.Close();
 	s = new char[srclen];
-	s[0] = '\0';
+	s[0] = '\0'; //return empty string
 	return s;
 }
 
@@ -489,10 +454,8 @@ char* ParsedStr::FullPath(const char *name)
 	const char *hmp = getenv("HOME");
 	char fpath[pathlen];
 	strncpy(fpath, hmp, pathlen-1);
-	if(fpath[pathlen-1] != '\0') {
-		perror(name);
-		exit(1);
-	}
+	if(fpath[pathlen-1] != '\0')
+		throw InputError(1, name, "Incorrect string");
 	int i = 0;
 	while(fpath[i] != '\0' && i < pathlen-1) {
 		++i;
@@ -502,12 +465,22 @@ char* ParsedStr::FullPath(const char *name)
 	while(name[j] != '\0' && i < pathlen-1) {
 		fpath[i++] = name[j++];
 	}
-	if(name[j] != '\0') {
-		perror(name);
-		exit(1);
-	}
+	if(name[j] != '\0')
+		throw InputError(1, name, "Incorrect string");
 	fpath[i] = '\0';
 	char *s = new char[pathlen];
 	strcpy(s, fpath);
 	return s;
+}
+
+void make_bak_file()
+{
+	DFile dic;
+	DFile bak;
+	dic.OpenR(paths[0]);
+	bak.OpenW(paths[2]);
+	char buf[ParsedStr::srclen];
+	while(fgets(buf, sizeof(buf), dic.Fl())) {
+		fputs(buf, bak.Fl());
+	}
 }

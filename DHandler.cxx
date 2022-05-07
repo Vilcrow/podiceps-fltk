@@ -23,6 +23,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include "DFile.H"
 #include "DHandler.H"
+#include "DError.H"
 
 extern char *paths[3];
 
@@ -62,14 +63,26 @@ void change_original(const char* old_word, const char* new_word)
 	ParsedStr oldp;
 	oldp.Original(old_word);
 	const char *olds = oldp.FindByOriginal();
-	if(olds[0] == '\0') {
-		printf("Word \"%s\" not found.\n", old_word);
-		exit(1);
+	ParsedStr nw;
+	nw.Original(new_word);
+	const char *ns = nw.FindByOriginal();
+	try {
+		if(olds[0] == '\0')
+			throw InputError(4, old_word, "The word don't exist");
+		if(ns[0] != '\0')
+			throw InputError(5, old_word, "The word already exist");
+	}
+	catch(...) {
+		delete[] olds;
+		delete[] ns;
+		throw;
 	}
 	oldp.DeleteStringFromFile();
 	ParsedStr newp(olds);
 	newp.Original(new_word);
 	newp.AddStringToFile();
+	delete[] olds;
+	delete[] ns;
 }
 
 void change_translation(const char* word, const char* new_translation)
@@ -85,14 +98,18 @@ void change_status(const char* word, const char *ns)
 	ParsedStr ps;
 	ps.Original(word);
 	const char *s = ps.FindByOriginal();
-	if(s[0] == '\0') {
-		printf("Word \"%s\" not found.\n", word);
-		exit(1);
+	try {
+		if(s[0] == '\0')
+			throw InputError(4, word, "The word don't exist");
+	}
+	catch(...) {
+		delete[] s;
 	}
 	ps.DeleteStringFromFile();
 	ParsedStr nps(s);
 	nps.WStatus(ns);
 	nps.AddStringToFile();
+	delete[] s;
 }
 
 void show_words(const char* pttr, const enum reqpart rp)
@@ -124,10 +141,8 @@ void show_words(const char* pttr, const enum reqpart rp)
 			done = true;
 		}
 	}
-	if(!done) {
-		printf("Requested word don't exist in dictonary.\n");
-		exit(0);
-	}
+	if(!done)
+		throw InputError(4, pttr, "The word don't exist");
 }
 
 void print_word(const char* string)
@@ -585,6 +600,7 @@ void find_words(find_pattern *p)
 	ps_item *tmp = first;
 	ps_item *tmp_prev = tmp;
 	bool cmp;
+	bool done = false;
 	while(tmp != nullptr) {
 		switch(p->rp) {
 		case rp_origl:
@@ -609,6 +625,7 @@ void find_words(find_pattern *p)
 			}
 			else
 				tmp = tmp->next;
+			done = true;
 		}
 		else {
 			tmp_prev = tmp;
@@ -616,4 +633,6 @@ void find_words(find_pattern *p)
 		}
 	}
 	write_to_file(first);
+	if(!done)
+		throw InputError(4, p->patt, "The word don't exist");
 }

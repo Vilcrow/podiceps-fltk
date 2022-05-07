@@ -38,6 +38,7 @@ struct controls {
 	Fl_Input *inpt[5];
 	Fl_Button *b[6];
 	DTable *tr;
+	Fl_Output *msg;
 };
 
 void start_GUI();
