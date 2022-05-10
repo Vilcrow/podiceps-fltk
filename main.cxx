@@ -28,9 +28,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DGraph.H"
 #include "DError.H"
 
-#define _(STR) (STR)
-#define N_(STR) (STR)
-
 int main(int argc, char** argv)
 {
 	ParsedStr::SetPaths();

@@ -20,6 +20,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef DFILE_H_SENTRY
 #define DFILE_H_SENTRY
 
+#define _(STR) (STR)
+#define N_(STR) (STR)
+
 class DFile {
 	FILE* fl;
 public:

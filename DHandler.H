@@ -41,7 +41,7 @@ struct find_pattern {
 };
 
 void help_page();
-void add_word(const char *ostr, const char *tstr, const char *status = "new");
+void add_word(const char *ostr, const char *tstr, const char *status = _("new"));
 void delete_word(const char *word);
 void change_original(const char *old_word, const char *new_word);
 void change_translation(const char *old_word, const char *new_word);

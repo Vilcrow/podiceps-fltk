@@ -29,18 +29,18 @@ extern char *paths[3];
 
 void help_page()
 {
-	printf("Options:\n");
-	printf("-h - Show this help.\n"); 
-	printf("-a [original] [translation] - Add new word.\n"); 
-	printf("-d [original] - Delete word by original.\n"); 
-	printf("-O [old original] [new original] - To correct the original.\n");
-	printf("-T [original] [new translation]- To correct the translation.\n"); 
-	printf("-S [original] [new status] - Change status.\n"); 
-	printf("-o [original],\n"); 
-	printf("-t [translation],\n"); 
-	printf("-s [status],\n"); 
-	printf("-D [date] - Show all words matching the pattern. You can use \"*\" and \"?\".\n"); 
-	printf("Without arguments - To run GUI.\n"); 
+	printf(_("Options:\n"));
+	printf(_("-h - Show this help.\n")); 
+	printf(_("-a [original] [translation] - Add new word.\n")); 
+	printf(_("-d [original] - Delete word by original.\n")); 
+	printf(_("-O [old original] [new original] - To correct the original.\n"));
+	printf(_("-T [original] [new translation]- To correct the translation.\n")); 
+	printf(_("-S [original] [new status] - Change status.\n")); 
+	printf(_("-o [original],\n")); 
+	printf(_("-t [translation],\n")); 
+	printf(_("-s [status],\n")); 
+	printf(_("-D [date] - Show all words matching the pattern. You can use \"*\" and \"?\".\n")); 
+	printf(_("Without arguments - To run GUI.\n")); 
 }
 
 void add_word(const char* ostr, const char* tstr, const char *status)
@@ -68,9 +68,9 @@ void change_original(const char* old_word, const char* new_word)
 	const char *ns = nw.FindByOriginal();
 	try {
 		if(olds[0] == '\0')
-			throw InputError(4, old_word, "The word don't exist");
+			throw InputError(4, old_word, _("The word don't exist"));
 		if(ns[0] != '\0')
-			throw InputError(5, old_word, "The word already exist");
+			throw InputError(5, old_word, _("The word already exist"));
 	}
 	catch(...) {
 		delete[] olds;
@@ -100,7 +100,7 @@ void change_status(const char* word, const char *ns)
 	const char *s = ps.FindByOriginal();
 	try {
 		if(s[0] == '\0')
-			throw InputError(4, word, "The word don't exist");
+			throw InputError(4, word, _("The word don't exist"));
 	}
 	catch(...) {
 		delete[] s;
@@ -142,7 +142,7 @@ void show_words(const char* pttr, const enum reqpart rp)
 		}
 	}
 	if(!done)
-		throw InputError(4, pttr, "The word don't exist");
+		throw InputError(4, pttr, _("The word don't exist"));
 }
 
 void print_word(const char* string)
@@ -152,7 +152,7 @@ void print_word(const char* string)
 	printf("%s\n", ps.Translation());
 	printf("[%s] ", ps.WStatus());
 	printf("[%s]\n", ps.Date());
-	printf("***********************************\n");
+	printf(N_("***********************************\n"));
 }
 
 bool is_match(const char* string, const char* pattern)
@@ -185,7 +185,7 @@ cl_arg* get_arguments(int argc, char **argv)
 	cl_arg *cla = new cl_arg;
 	int opt;
 	opterr = 0; //getopt doesn't print any messages
-	while((opt = getopt(argc, argv, "ha:d:O:T:S:o:t:s:D:c")) != -1) {
+	while((opt = getopt(argc, argv, N_("ha:d:O:T:S:o:t:s:D:c"))) != -1) {
 		switch(opt) {
 		case 'h':
 			help_page();
@@ -238,7 +238,7 @@ cl_arg* get_arguments(int argc, char **argv)
 			cla->arg1 = optarg;
 			break;
 		case 'c':
-			printf("Total count: %d\n", word_count());
+			printf(_("Total count: %d\n"), word_count());
 			exit(0);
 		default:
 			help_page();
@@ -634,5 +634,5 @@ void find_words(find_pattern *p)
 	}
 	write_to_file(first);
 	if(!done)
-		throw InputError(4, p->patt, "The word don't exist");
+		throw InputError(4, p->patt, _("The word don't exist"));
 }

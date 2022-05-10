@@ -29,8 +29,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DError.H"
 
 extern char *paths[3];
-static const char *colsname[] = { "Original", "Translation", "Status", "Date" };
-static const char *bname[] = { "@+", "@line", "Amend", "@search", "Clear", "Quit" };
+
+static const char *colsname[] = { _("Original"), _("Translation"),
+								  _("Status"), _("Date") };
+
+static const char *bname[] = { N_("@+"), N_("@line"), _("Amend"),
+							   N_("@search"), _("Clear"), _("Quit") };
 
 class DTable : public Fl_Table_Row {
 	int last_col;
@@ -59,7 +63,7 @@ DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	last_col = -1;
 	reverse = false;
 	col_header(1);
-	col_resize(0);
+	col_resize(1);
 	col_header_height(input_h);
 	row_header(0);
 	row_resize(0);
@@ -132,7 +136,7 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 	int index = 0;
 	DFile dct;
 	dct.OpenR(paths[0]);
-	static char s[40];
+	static char s[ParsedStr::orglen];
 	char buf[ParsedStr::srclen];
 	char *opened;
 	for(int i = 0; i <= row; ++i) {
@@ -194,6 +198,13 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 			return;
 		}
 	}
+	if(col_width(0) >= ctrl->tr->w() || col_width(1) >= ctrl->tr->w() ||
+											col_width(2) >= ctrl->tr->w())
+		col_width_all(ctrl->tr->w()/4);
+	//table fills all available field of window by expanding the last column
+	int lc_w = ctrl->tr->w() - col_width(0) - col_width(1) - col_width(2)
+											- Fl::scrollbar_size()-frame;
+	col_width(3, lc_w);
 }
 
 void DTable::draw_sort_arrow(int x, int y, int w, int h)
@@ -224,7 +235,7 @@ void start_GUI()
 	Fl::option(Fl::OPTION_ARROW_FOCUS, 0);
 	int win_w = 4*input_w + 2*frame + 20;
 	int win_h = 5*frame + 26*input_h;
-	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, "podiceps");
+	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, N_("podiceps"));
 	int x = frame;
 	int y = frame;
 	controls *ctrl = new controls;
@@ -233,16 +244,22 @@ void start_GUI()
 	ctrl->tr->col_header(1);
 	ctrl->tr->when(FL_WHEN_RELEASE);
 	ctrl->tr->SetCtrl(ctrl);
+	win->resizable(ctrl->tr);
 	y += 21*input_h;
 	for(int i = 0; i < 4; ++i) {
 		ctrl->inpt[i] = new Fl_Input(x, y, input_w, input_h);		
 		x += input_w;
 	}
+	ctrl->inpt[0]->maximum_size(ParsedStr::orglen);
+	ctrl->inpt[1]->maximum_size(ParsedStr::trllen);
+	ctrl->inpt[2]->maximum_size(ParsedStr::stlen);
+	ctrl->inpt[3]->maximum_size(ParsedStr::dtlen);
 	ctrl->inpt[0]->take_focus();
 	ctrl->inpt[3]->color(48);
 	x = frame;
 	y += input_h + frame;
 	ctrl->inpt[4] = new Fl_Input(frame, y, input_w, input_h);
+	ctrl->inpt[4]->maximum_size(ParsedStr::orglen);
 	x = frame + input_w / 2;
 	y += input_h + frame;
 	for(int i = 0; i < 6; ++i) {
@@ -253,23 +270,24 @@ void start_GUI()
 	y += frame + 2*input_h;
 	ctrl->msg = new Fl_Output(frame, y, 4*input_w, input_h);
 	ctrl->msg->box(FL_FLAT_BOX);
+	ctrl->msg->color(FL_GRAY);
 	ctrl->b[0]->callback(add_cb, (void*)ctrl);
-	ctrl->b[0]->tooltip("Add new word\n'Enter'");
+	ctrl->b[0]->tooltip(_("Add new word\n'Enter'"));
 	ctrl->b[0]->shortcut(FL_Enter);
 	ctrl->b[1]->callback(delete_cb, (void*)ctrl);
-	ctrl->b[1]->tooltip("Delete word\n'CTRL+d'");
+	ctrl->b[1]->tooltip(_("Delete word\n'CTRL+d'"));
 	ctrl->b[1]->shortcut(FL_CTRL+'d');
 	ctrl->b[2]->callback(amend_cb, (void*)ctrl);
-	ctrl->b[2]->tooltip("Amendment\n'CTRL+a'");
+	ctrl->b[2]->tooltip(_("Amendment\n'CTRL+a'"));
 	ctrl->b[2]->shortcut(FL_CTRL+'a');
 	ctrl->b[3]->callback(find_cb, (void*)ctrl);
-	ctrl->b[3]->tooltip("Search\n'CTRL+s'");
+	ctrl->b[3]->tooltip(_("Search\n'CTRL+s'"));
 	ctrl->b[3]->shortcut(FL_CTRL+'s');
 	ctrl->b[4]->callback(clear_cb, (void*)ctrl);
-	ctrl->b[4]->tooltip("Clear the input fields\n'CTRL+c'");
+	ctrl->b[4]->tooltip(_("Clear the input fields\n'CTRL+c'"));
 	ctrl->b[4]->shortcut(FL_CTRL+'c');
 	ctrl->b[5]->callback(exit_cb, (void*)ctrl);
-	ctrl->b[5]->tooltip("Exit\n'ESC'");
+	ctrl->b[5]->tooltip(_("Exit\n'ESC'"));
 	win->end();
 	win->show();
 	Fl::run();
@@ -304,7 +322,7 @@ void add_cb(Fl_Widget *w, void *user)
 			c->msg->value("");
 		}
 		else
-			c->msg->value("Enter the word");
+			c->msg->value(_("Enter the word"));
 	}
 	catch(const InputError &ie) {
 		c->msg->value(ie.Comment());

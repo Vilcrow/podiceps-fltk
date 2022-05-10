@@ -35,8 +35,8 @@ void DFile::OpenR(const char* name)
 	if(!fl) {
 		fl = fopen(name, "w");
 		if(!fl)
-			throw FileError(name, "Couldn't open.");
-		printf("Created new file.\n");
+			throw FileError(name, _("Couldn't open."));
+		printf(_("Created new file.\n"));
 	}
 }
 
@@ -44,14 +44,14 @@ void DFile::OpenW(const char* name)
 {
 	fl = fopen(name, "w");
 	if(!fl)
-		throw FileError(name, "Couldn't open.");
+		throw FileError(name, _("Couldn't open."));
 }
 
 void DFile::OpenA(const char* name)
 {
 	fl = fopen(name, "a");
 	if(!fl)
-		throw FileError(name, "Couldn't open.");
+		throw FileError(name, _("Couldn't open."));
 }
 
 //class ParsedStr
@@ -65,7 +65,7 @@ ParsedStr::ParsedStr()
 	tranl[0] = '\0';
 	status = new char[stlen];
 	status[0] = '\0';
-	strcpy(status, "new");
+	strcpy(status, _("new"));
 	date = new char[dtlen];
 	date[0] = '\0';
 	const char *d = GetCurrentDate();
@@ -86,7 +86,7 @@ ParsedStr::ParsedStr(const ParsedStr& s) : ParsedStr()
 void ParsedStr::Parse(const char *s)
 {
 	if(!IsCorrectString(s))
-		throw InputError(1, s, "Incorrect string");
+		throw InputError(1, s, _("Incorrect string"));
 	strcpy(str, s);
 	int i = 1;
 	int j = 0;
@@ -117,7 +117,7 @@ void ParsedStr::Parse(const char *s)
 void ParsedStr::Original(const char *ns)
 {
 	if(strlen(ns) >= orglen)
-		throw InputError(2, ns, "Too long string");
+		throw InputError(2, ns, _("Too long string"));
 	int i = 0;
 	while(ns[i] != '\0') {
 		origl[i] = ns[i];
@@ -130,7 +130,7 @@ void ParsedStr::Original(const char *ns)
 void ParsedStr::Translation(const char *ns)
 {
 	if(strlen(ns) >= trllen)
-		throw InputError(2, ns, "Too long string");
+		throw InputError(2, ns, _("Too long string"));
 	int i = 0;
 	while(ns[i] != '\0') {
 		tranl[i] = ns[i];
@@ -143,12 +143,12 @@ void ParsedStr::Translation(const char *ns)
 void ParsedStr::WStatus(const char *ns)
 {
 	if(ns == nullptr) {
-		if(strcmp(status, "new") == 0) {
-			strcpy(status, "remembered");
+		if(strcmp(status, _("new")) == 0) {
+			strcpy(status, _("remembered"));
 			RefreshSourceString();
 		}
 		else {
-			strcpy(status, "new");
+			strcpy(status, _("new"));
 			RefreshSourceString();
 		}
 	}
@@ -163,7 +163,7 @@ void ParsedStr::WStatus(const char *ns)
 void ParsedStr::Date(const char *ns)
 {
 	if(strlen(ns) >= dtlen)
-		throw InputError(2, ns, "Too long string");
+		throw InputError(2, ns, _("Too long string"));
 	int i = 0;
 	while(ns[i] != '\0') {
 		date[i] = ns[i];
@@ -209,7 +209,7 @@ bool ParsedStr::CmpByOriginal(const char *string) const
 void ParsedStr::AddStringToFile() const //exception handling, need fix
 {
 	if(!IsCorrectString(GetSrcStr()))
-		throw InputError(1, GetSrcStr(), "Incorrect string");
+		throw InputError(1, GetSrcStr(), _("Incorrect string"));
 	int cmp;
 	char buf[srclen];
 	bool is = false; //word already exists in file?
@@ -230,7 +230,7 @@ void ParsedStr::AddStringToFile() const //exception handling, need fix
 		dest.Close();
 	}
 	else
-		throw InputError(5, Original(), "The word already exists");
+		throw InputError(5, Original(), _("The word already exists"));
 }
 
 void ParsedStr::DeleteStringFromFile() const
@@ -254,11 +254,11 @@ void ParsedStr::DeleteStringFromFile() const
 	dest.Close();
 	tmp.Close();
 	if(!done)
-		throw InputError(4, Original(), "The word don't exist");
+		throw InputError(4, Original(), _("The word don't exist"));
 	int code;
 	code = rename(paths[1], paths[0]);
 	if(code != 0)
-		throw FileError(paths[1], "Renaming failed");
+		throw FileError(paths[1], _("Renaming failed"));
 }
 
 void ParsedStr::ReplaceByOriginalInFile()
@@ -288,9 +288,9 @@ void ParsedStr::ReplaceByOriginalInFile()
 	int code;
 	code = rename(paths[1], paths[0]);
 	if(code != 0)
-		throw FileError(paths[1], "Renaming failed");
+		throw FileError(paths[1], _("Renaming failed"));
 	if(!done)
-		throw InputError(4, Original(), "The word don't exist");
+		throw InputError(4, Original(), _("The word don't exist"));
 }
 
 bool ParsedStr::IsCorrectString(const char *string)
@@ -336,7 +336,7 @@ bool ParsedStr::IsCorrectString(const char *string)
 	return true;
 }
 
-char* ParsedStr::GetCurrentDate() const //????
+char* ParsedStr::GetCurrentDate() const
 {
 	char* date = new char[dtlen];
 	struct tm *tmp;
@@ -364,7 +364,7 @@ ParsedStr::~ParsedStr()
 const ParsedStr& ParsedStr::operator=(const char *s)
 {
 	if(strlen(s) >= srclen)
-		throw InputError(2, s, "Too long string");
+		throw InputError(2, s, _("Too long string"));
 	Parse(s);
 	return *this;
 }
@@ -392,7 +392,8 @@ char* ParsedStr::FindByOriginal() const
 
 void ParsedStr::SetPaths()
 {
-	const char *const paths_end[] = { ".podic.txt", ".podictmp.txt", ".podic.txt.bak" };
+	const char *const paths_end[] = { N_(".podic.txt"), N_(".podictmp.txt"),
+									  N_(".podic.txt.bak") };
 	char *s;
 	for(int i = 0; i < pathcnt; ++i) {
 		paths[i] = new char[pathlen];
@@ -451,11 +452,11 @@ void ParsedStr::DateToYMD(char *dt)
 
 char* ParsedStr::FullPath(const char *name)
 {
-	const char *hmp = getenv("HOME");
+	const char *hmp = getenv(N_("HOME"));
 	char fpath[pathlen];
 	strncpy(fpath, hmp, pathlen-1);
 	if(fpath[pathlen-1] != '\0')
-		throw InputError(1, name, "Incorrect string");
+		throw InputError(1, name, _("Incorrect string"));
 	int i = 0;
 	while(fpath[i] != '\0' && i < pathlen-1) {
 		++i;
@@ -466,7 +467,7 @@ char* ParsedStr::FullPath(const char *name)
 		fpath[i++] = name[j++];
 	}
 	if(name[j] != '\0')
-		throw InputError(1, name, "Incorrect string");
+		throw InputError(1, name, _("Incorrect string"));
 	fpath[i] = '\0';
 	char *s = new char[pathlen];
 	strcpy(s, fpath);

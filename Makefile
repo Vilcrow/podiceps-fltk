@@ -10,7 +10,7 @@ podiceps: DError.o DFile.o DHandler.o DGraph.o main.o -lfltk
 clean:
 	rm -f *.o *~ deps.mk podiceps
 
-deps.mk: $(wildcard *.cpp) Makefile
+deps.mk: $(wildcard *.cxx) Makefile
 	$(CXX) -MM $(wildcard *.cxx) > $@
 
 ifneq (clean, $(MAKECMDGOALS))
