@@ -278,8 +278,8 @@ void start_GUI()
 	ctrl->b[1]->tooltip(_("Delete word\n'CTRL+d'"));
 	ctrl->b[1]->shortcut(FL_CTRL+'d');
 	ctrl->b[2]->callback(amend_cb, (void*)ctrl);
-	ctrl->b[2]->tooltip(_("Amendment\n'CTRL+a'"));
-	ctrl->b[2]->shortcut(FL_CTRL+'a');
+	ctrl->b[2]->tooltip(_("Amendment\n'CTRL+e'"));
+	ctrl->b[2]->shortcut(FL_CTRL+'e');
 	ctrl->b[3]->callback(find_cb, (void*)ctrl);
 	ctrl->b[3]->tooltip(_("Search\n'CTRL+s'"));
 	ctrl->b[3]->shortcut(FL_CTRL+'s');
