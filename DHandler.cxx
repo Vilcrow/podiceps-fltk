@@ -40,6 +40,11 @@ void help_page()
 	printf(_("-t [translation],\n")); 
 	printf(_("-s [status],\n")); 
 	printf(_("-D [date] - Show all words matching the pattern. You can use \"*\" and \"?\".\n")); 
+	printf(_("-c - Count the number of words.\n")); 
+	printf(_("-r - Sort by original.\n")); 
+	printf(_("-R - Sort by translation.\n")); 
+	printf(_("-x - Sort by status.\n")); 
+	printf(_("-X - Sort by date.\n")); 
 	printf(_("Without arguments - To run GUI.\n")); 
 }
 
@@ -60,6 +65,8 @@ void delete_word(const char* word)
 
 void change_original(const char* old_word, const char* new_word)
 {
+	if(new_word == nullptr)
+		throw InputError(6, _("New word"), _("Empty input"));
 	ParsedStr oldp;
 	oldp.Original(old_word);
 	const char *olds = oldp.FindByOriginal();
@@ -85,11 +92,13 @@ void change_original(const char* old_word, const char* new_word)
 	delete[] ns;
 }
 
-void change_translation(const char* word, const char* new_translation)
+void change_translation(const char* word, const char* new_word)
 {
-	ParsedStr ps(word, new_translation);
+	if(new_word == nullptr)
+		throw InputError(6, _("New word"), _("Empty input"));
+	ParsedStr ps(word, new_word);
 	ps.ReplaceByOriginalInFile();
-	ps.Translation(new_translation);
+	ps.Translation(new_word);
 	ps.ReplaceByOriginalInFile();
 }
 
@@ -148,11 +157,19 @@ void show_words(const char* pttr, const enum reqpart rp)
 void print_word(const char* string)
 {
 	ParsedStr ps(string);
-	printf("%s\n", ps.Original());
-	printf("%s\n", ps.Translation());
-	printf("[%s] ", ps.WStatus());
-	printf("[%s]\n", ps.Date());
-	printf(N_("***********************************\n"));
+	printf("%s", ps.Original());
+	int len = strlen(ps.Original());
+	for(int i = ParsedStr::orglen-len-1; i >= 0; i--)
+		printf(" ");
+	printf("%s", ps.Translation());		//curved columns. Need fix
+	len = strlen(ps.Translation())/2;
+	for(int i = ParsedStr::trllen/2-len-1; i >= 0; i--)
+		printf(" ");
+	printf("%s", ps.WStatus());
+	len = strlen(ps.WStatus());
+	for(int i = ParsedStr::stlen-len-1; i >= 0; i--)
+		printf(" ");
+	printf("%s\n", ps.Date());
 }
 
 bool is_match(const char* string, const char* pattern)
@@ -185,7 +202,7 @@ cl_arg* get_arguments(int argc, char **argv)
 	cl_arg *cla = new cl_arg;
 	int opt;
 	opterr = 0; //getopt doesn't print any messages
-	while((opt = getopt(argc, argv, N_("ha:d:O:T:S:o:t:s:D:c"))) != -1) {
+	while((opt = getopt(argc, argv, N_("ha:d:O:T:S:o:t:s:D:crRxX"))) != -1) {
 		switch(opt) {
 		case 'h':
 			help_page();
@@ -240,6 +257,22 @@ cl_arg* get_arguments(int argc, char **argv)
 		case 'c':
 			printf(_("Total count: %d\n"), word_count());
 			exit(0);
+		case 'r':
+			cla->act = a_resort;
+			cla->rp = rp_origl;
+			break;
+		case 'R':
+			cla->act = a_resort;
+			cla->rp = rp_tranl;
+			break;
+		case 'x':
+			cla->act = a_resort;
+			cla->rp = rp_st;
+			break;
+		case 'X':
+			cla->act = a_resort;
+			cla->rp = rp_dt;
+			break;
 		default:
 			help_page();
 			exit(1);
@@ -267,6 +300,9 @@ void handle_arguments(const cl_arg *cla)
 		break;
 	case a_show:
 		show_words(cla->arg1, cla->rp);
+		break;
+	case a_resort:
+		resort_words(cla->rp);
 	}
 }
 
@@ -567,7 +603,7 @@ void write_to_file(ps_item *ps)
 	cur.OpenW(paths[0]);
 	ps_item *tmp = ps;
 	while(ps != nullptr) {
-		fputs(ps->ps.GetSrcStr(), cur.Fl());
+		fputs(ps->ps.SourceString(), cur.Fl());
 		tmp = ps;
 		ps = ps->next;
 		delete tmp;
@@ -635,4 +671,24 @@ void find_words(find_pattern *p)
 	write_to_file(first);
 	if(!done)
 		throw InputError(4, p->patt, _("The word don't exist"));
+}
+
+void resort_words(const enum reqpart rp)
+{
+	ps_item *first = ps_list();
+	switch(rp) {
+	case rp_origl:
+		first = sort_orgl(first);
+		break;
+	case rp_tranl:
+		first = sort_trll(first);
+		break;
+	case rp_st:
+		first = sort_st(first);
+		break;
+	case rp_dt:
+		first = sort_dt(first);
+		break;
+	}
+	write_to_file(first);
 }

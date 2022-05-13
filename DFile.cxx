@@ -80,7 +80,7 @@ ParsedStr::ParsedStr(const char *s) : ParsedStr()
 
 ParsedStr::ParsedStr(const ParsedStr& s) : ParsedStr()
 {
-	Parse(s.GetSrcStr());
+	Parse(s.SourceString());
 }
 
 void ParsedStr::Parse(const char *s)
@@ -118,6 +118,8 @@ void ParsedStr::Original(const char *ns)
 {
 	if(strlen(ns) >= orglen)
 		throw InputError(2, ns, _("Too long string"));
+	else if(ns == nullptr)
+		throw InputError(6, _("New word"), _("Empty input"));
 	int i = 0;
 	while(ns[i] != '\0') {
 		origl[i] = ns[i];
@@ -131,6 +133,8 @@ void ParsedStr::Translation(const char *ns)
 {
 	if(strlen(ns) >= trllen)
 		throw InputError(2, ns, _("Too long string"));
+	else if(ns == nullptr)
+		throw InputError(6, _("New word"), _("Empty input"));
 	int i = 0;
 	while(ns[i] != '\0') {
 		tranl[i] = ns[i];
@@ -208,8 +212,8 @@ bool ParsedStr::CmpByOriginal(const char *string) const
 
 void ParsedStr::AddStringToFile() const //exception handling, need fix
 {
-	if(!IsCorrectString(GetSrcStr()))
-		throw InputError(1, GetSrcStr(), _("Incorrect string"));
+	if(!IsCorrectString(SourceString()))
+		throw InputError(1, SourceString(), _("Incorrect string"));
 	int cmp;
 	char buf[srclen];
 	bool is = false; //word already exists in file?
@@ -336,7 +340,7 @@ bool ParsedStr::IsCorrectString(const char *string)
 	return true;
 }
 
-char* ParsedStr::GetCurrentDate() const
+char* ParsedStr::GetCurrentDate()
 {
 	char* date = new char[dtlen];
 	struct tm *tmp;
@@ -350,7 +354,8 @@ char* ParsedStr::GetCurrentDate() const
 ParsedStr::ParsedStr(const char *ostr, const char *tstr) : ParsedStr()
 {
 	Original(ostr);
-	Translation(tstr);
+	if(tstr != nullptr)
+		Translation(tstr);
 }
 ParsedStr::~ParsedStr()
 {

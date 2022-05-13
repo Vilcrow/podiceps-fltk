@@ -358,6 +358,7 @@ void find_cb(Fl_Widget *w, void *user)
 		c->msg->value(ie.Comment());
 	}
 	c->tr->redraw();
+	c->tr->row_position(0);
 	c->inpt[0]->take_focus();
 }
 

@@ -44,7 +44,7 @@ class ParsedStr {
 	char *status;
 	char *date;
 public:
-	enum { orglen = 35, trllen = orglen*2, stlen = 15, dtlen = 15, pcount = 4 };
+	enum { orglen = 35, trllen = orglen*2, stlen = 15, dtlen = 11, pcount = 4 };
 	enum { srclen = orglen+trllen+stlen+dtlen+pcount+1, pathlen = 256, pathcnt = 3 };
 	enum { delimiter = '|' };
 	ParsedStr();
@@ -52,7 +52,7 @@ public:
 	ParsedStr(const ParsedStr& s);
 	ParsedStr(const char *ostr, const char *tstr);
 	~ParsedStr();
-	inline const char* GetSrcStr() const { return str; }
+	inline const char* SourceString() const { return str; }
  	inline const char* Original() const { return origl; }
 	inline const char* Translation() const { return tranl; }
 	inline const char* WStatus() const { return status; }
@@ -73,11 +73,12 @@ public:
 private:
 	void Parse(const char *s);
 	void RefreshSourceString();
-	char* GetCurrentDate() const;
+	static char* GetCurrentDate();
 	static char* FullPath(const char *name);
-	static void DateToYMD(char *dt); //convert date to YYYY-MM-DD format
+	//convert date to YYYY-MM-DD format correct lexical comparison
+	static void DateToYMD(char *dt);
 };
 
-void make_bak_file();
+void make_bak_file(); //make backup copy of current dictonary file
 
 #endif

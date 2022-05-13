@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef DHANDLER_H_SENTRY
 #define DHANDLER_H_SENTRY
 
-enum action { a_add, a_del, a_cor, a_show }; //what need to do
+enum action { a_add, a_del, a_cor, a_show, a_resort }; //what need to do
 enum reqpart { rp_origl, rp_tranl, rp_st, rp_dt }; //required part
 
 struct cl_arg {	//command line argumets
@@ -60,5 +60,6 @@ ps_item* sort_dt(ps_item* ps);
 void write_to_file(ps_item *ps);
 ps_item* reverse_list(ps_item *ps);
 void find_words(find_pattern *p);
+void resort_words(const enum reqpart rp);
 
 #endif

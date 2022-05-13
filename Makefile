@@ -1,8 +1,10 @@
 CXX = g++
 CXXFLAGS = -Wall -g
+#Use FLTK
+LFLAGS = -lfltk
 
-podiceps: DError.o DFile.o DHandler.o DGraph.o main.o -lfltk
-	$(CXX) $^ -o $@
+podiceps: DError.o DFile.o DHandler.o DGraph.o main.o
+	$(CXX) $^ -o $@ $(LFLAGS)
 
 %.o: %.cxx
 	$(CXX) $(CXXFLAGS) -c $<

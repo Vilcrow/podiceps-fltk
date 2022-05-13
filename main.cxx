@@ -33,10 +33,10 @@ int main(int argc, char** argv)
 	ParsedStr::SetPaths();
 	make_bak_file();
 	try {
-		if(argc == 1) {
+		if(argc == 1) { //GUI
 			start_GUI();
 		}
-		else {
+		else { //CLI
 			const cl_arg *clarg = get_arguments(argc, argv);
 			handle_arguments(clarg);
 		}
