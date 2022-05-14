@@ -37,8 +37,8 @@ int main(int argc, char** argv)
 			start_GUI();
 		}
 		else { //CLI
-			const cl_arg *clarg = get_arguments(argc, argv);
-			handle_arguments(clarg);
+			const cl_arg *cl_a = get_arguments(argc, argv);
+			handle_arguments(cl_a);
 		}
 	}
 	catch(const InputError& ie) {

@@ -347,7 +347,7 @@ char* ParsedStr::GetCurrentDate()
 	const time_t timer = time(NULL);
 	tmp = localtime(&timer);
 	strftime(date, dtlen, "%d-%m-%Y", tmp);
-	date[dtlen] = '\0';
+	date[dtlen-1] = '\0';
 	return date;
 }
 
@@ -399,10 +399,9 @@ void ParsedStr::SetPaths()
 {
 	const char *const paths_end[] = { N_(".podic.txt"), N_(".podictmp.txt"),
 									  N_(".podic.txt.bak") };
-	char *s;
 	for(int i = 0; i < pathcnt; ++i) {
 		paths[i] = new char[pathlen];
-		s = FullPath(paths_end[i]);
+		char *s = FullPath(paths_end[i]);
 		strcpy(paths[i], s);
 		delete[] s;
 	}

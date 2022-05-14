@@ -200,6 +200,10 @@ bool is_match(const char* string, const char* pattern)
 cl_arg* get_arguments(int argc, char **argv)
 {
 	cl_arg *cla = new cl_arg;
+	cla->act = a_add;
+	cla->rp = rp_origl;
+	cla->arg1 = nullptr;
+	cla->arg2 = nullptr;
 	int opt;
 	opterr = 0; //getopt doesn't print any messages
 	while((opt = getopt(argc, argv, N_("ha:d:O:T:S:o:t:s:D:crRxX"))) != -1) {
