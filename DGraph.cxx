@@ -23,6 +23,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_Table_Row.H>
+#include <vector>
+#include <string>
 #include "DFile.H"
 #include "DHandler.H"
 #include "DGraph.H"
@@ -36,41 +38,20 @@ static const char *colsname[] = { _("Original"), _("Translation"),
 static const char *bname[] = { N_("@+"), N_("@line"), _("Amend"),
 							   N_("@search"), _("Clear"), _("Quit") };
 
-class DTable : public Fl_Table_Row {
-	int last_col;
-	bool reverse;
-	controls *ctrl;
-protected:
-	void draw_cell(TableContext context, int r, int c, int x, int y, int w, int h);
-	void draw_sort_arrow(int x, int y, int w, int h);
-	void sort_col(int col, bool rev = false);
-public:
-	DTable(int x, int y, int w, int h, const char *l);
-	inline void SetCtrl(controls *c) { ctrl = c; }
-	int handle(int e);
-	void Refresh();
-	~DTable() {}
-private:
-	static void event_callback(Fl_Widget *w, void *user)
-					{ ((DTable*)w)->event_callback2(); }
-	void event_callback2();
-};
-
 DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	Fl_Table_Row(x, y, w, h, l)
 {
 	ctrl = nullptr;
-	last_col = -1;
+	last_col = 0;
 	reverse = false;
+	UpdateVec();
+	cols(4);
 	col_header(1);
 	col_resize(1);
 	col_header_height(input_h);
+	col_width_all(input_w);
 	row_header(0);
 	row_resize(0);
-	int rows_t = word_count();
-	rows(rows_t);
-	cols(4);
-	col_width_all(input_w);
 	end();
 	callback(event_callback, (void*)this);
 }
@@ -83,13 +64,7 @@ int DTable::handle(int e)
 		for(int r = 0; r <rows(); ++r) {
 			for(int c = 0; c < cols(); ++c) {
 				if(row_selected(r)) {
-					DFile cur;
-					char buf[ParsedStr::srclen];
-					cur.OpenR(paths[0]);
-					for(int i = 0; i <= r; ++i) {
-						fgets(buf, sizeof(buf), cur.Fl());
-					}
-					ParsedStr ps(buf);
+					ParsedStr ps(rows_vec[r].c_str());
 					ctrl->inpt[0]->value("");
 					ctrl->inpt[1]->value("");
 					ctrl->inpt[2]->value("");
@@ -134,76 +109,68 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 						int x = 0, int y = 0, int w = 0, int h = 0)
 {
 	int index = 0;
-	DFile dct;
-	dct.OpenR(paths[0]);
 	static char s[ParsedStr::orglen];
-	char buf[ParsedStr::srclen];
-	char *opened;
-	for(int i = 0; i <= row; ++i) {
-		opened = fgets(buf, sizeof(buf), dct.Fl());
-	}
-	if(opened != NULL) {
-		ParsedStr ps(buf);
-		switch(context) {
-		case CONTEXT_STARTPAGE:
-			fl_font(FL_HELVETICA, 12);
-			break;
-		case CONTEXT_RC_RESIZE:
-			for(int r = 0; r < rows(); ++r) {
-				for(int c = 0; c < cols(); ++c) {
-					if(index >= children())
-						break;
-					find_cell(CONTEXT_TABLE, r, c, x, y, w, h);
-					child(index++)->resize(x, y, w, h);
-				}
+	static char buf[ParsedStr::srclen];
+	ParsedStr ps(rows_vec[row].c_str());
+	switch(context) {
+	case CONTEXT_STARTPAGE:
+		fl_font(FL_HELVETICA, 12);
+		break;
+	case CONTEXT_RC_RESIZE:
+		for(int r = 0; r < rows(); ++r) {
+			for(int c = 0; c < cols(); ++c) {
+				if(index >= children())
+					break;
+				find_cell(CONTEXT_TABLE, r, c, x, y, w, h);
+				child(index++)->resize(x, y, w, h);
 			}
-			init_sizes();
-			return;
-		case CONTEXT_COL_HEADER:
-			fl_push_clip(x, y, w, h);
-				fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, FL_BACKGROUND_COLOR);
-				fl_font(FL_HELVETICA | FL_BOLD, 12);
-				fl_color(FL_BLACK);
-				sprintf(s, "%s", colsname[col]);
-				fl_draw(s, x, y, w, h, FL_ALIGN_CENTER);
-				if(col == last_col)
-					draw_sort_arrow(x, y, w, h);
-			fl_pop_clip();
-			return;
-		case CONTEXT_CELL: {
-			switch(col) {
-			case 0:
-				strncpy(buf, ps.Original(), ParsedStr::orglen);
-				break;
-			case 1:
-				strncpy(buf, ps.Translation(), ParsedStr::trllen);
-				break;
-			case 2:
-				strncpy(buf, ps.WStatus(), ParsedStr::stlen);
-				break;
-			case 3:
-				strncpy(buf, ps.Date(), ParsedStr::dtlen);
-				break;
-			}
-			int selected = row_selected(row);
-			fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, selected ? FL_YELLOW : FL_WHITE);
-			fl_push_clip(x, y, w, h);
-			fl_font(FL_HELVETICA, 14);
+		}
+		init_sizes();
+		return;
+	case CONTEXT_COL_HEADER:
+		fl_push_clip(x, y, w, h);
+			fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, FL_BACKGROUND_COLOR);
+			fl_font(FL_HELVETICA | FL_BOLD, 12);
 			fl_color(FL_BLACK);
-			fl_draw(buf, x, y, w, h, FL_ALIGN_LEFT);
-			fl_pop_clip();
-			return;
+			sprintf(s, "%s", colsname[col]);
+			fl_draw(s, x, y, w, h, FL_ALIGN_CENTER);
+			if(col == last_col)
+				draw_sort_arrow(x, y, w, h);
+		fl_pop_clip();
+		return;
+	case CONTEXT_CELL: {
+		switch(col) {
+		case 0:
+			strncpy(buf, ps.Original(), ParsedStr::orglen);
+			break;
+		case 1:
+			strncpy(buf, ps.Translation(), ParsedStr::trllen);
+			break;
+		case 2:
+			strncpy(buf, ps.WStatus(), ParsedStr::stlen);
+			break;
+		case 3:
+			strncpy(buf, ps.Date(), ParsedStr::dtlen);
+			break;
 		}
-		default:
-			return;
-		}
+		int selected = row_selected(row);
+		fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, selected ? FL_YELLOW : FL_WHITE);
+		fl_push_clip(x, y, w, h);
+		fl_font(FL_HELVETICA, 14);
+		fl_color(FL_BLACK);
+		fl_draw(buf, x, y, w, h, FL_ALIGN_LEFT);
+		fl_pop_clip();
+		return;
+	}
+	default:
+		return;
 	}
 	if(col_width(0) >= ctrl->tr->w() || col_width(1) >= ctrl->tr->w() ||
-											col_width(2) >= ctrl->tr->w())
+										col_width(2) >= ctrl->tr->w())
 		col_width_all(ctrl->tr->w()/4);
 	//table fills all available field of window by expanding the last column
 	int lc_w = ctrl->tr->w() - col_width(0) - col_width(1) - col_width(2)
-											- Fl::scrollbar_size()-frame;
+										- Fl::scrollbar_size()-frame;
 	col_width(3, lc_w);
 }
 
@@ -306,8 +273,7 @@ void exit_cb(Fl_Widget *w, void *)
 
 void DTable::Refresh()
 {
-	int t = word_count();
-	rows(t);
+	UpdateVec();
 	redraw();
 	ctrl->inpt[0]->take_focus();
 }
@@ -415,6 +381,7 @@ void clear_cb(Fl_Widget *w, void *user)
 
 void DTable::sort_col(int col, bool rev)
 {
+	select_all_rows(0); //disable row selection
 	ps_item *first = ps_list();
 	switch(col) {
 	case rp_origl:
@@ -433,5 +400,21 @@ void DTable::sort_col(int col, bool rev)
 	if(rev)
 		first = reverse_list(first);	
 	write_to_file(first);
-	redraw();
+	Refresh();
+}
+
+void DTable::UpdateVec()
+{
+	rows_vec.clear();
+	DFile dic;
+	int rows_t = 0;
+	dic.OpenR(paths[0]);
+	char buf[ParsedStr::srclen];
+	while(fgets(buf, sizeof(buf), dic.Fl())) {
+		std::string s(buf);
+		rows_vec.push_back(s);
+		++rows_t;
+	}
+	dic.Close();
+	rows(rows_t);
 }

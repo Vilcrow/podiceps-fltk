@@ -20,7 +20,40 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef DGRAPH_H_SENTRY
 #define DGRAPH_H_SENTRY
 
+#include <vector>
+#include <string>
+#include <FL/Fl_Table_Row.H>
+
 class DTable;
+
+struct controls {
+	Fl_Input *inpt[5];
+	Fl_Button *b[6];
+	DTable *tr;
+	Fl_Output *msg;
+};
+
+class DTable : public Fl_Table_Row {
+	int last_col;
+	bool reverse;
+	controls *ctrl;
+	std::vector<std::string> rows_vec;
+protected:
+	void draw_cell(TableContext context, int r, int c, int x, int y, int w, int h);
+	void draw_sort_arrow(int x, int y, int w, int h);
+	void sort_col(int col, bool rev = false);
+public:
+	DTable(int x, int y, int w, int h, const char *l);
+	inline void SetCtrl(controls *c) { ctrl = c; }
+	int handle(int e);
+	void Refresh();
+	~DTable() {}
+private:
+	static void event_callback(Fl_Widget *w, void *user)
+					{ ((DTable*)w)->event_callback2(); }
+	void event_callback2();
+	void UpdateVec();
+};
 
 enum { 
 		frame = 5,
@@ -33,13 +66,6 @@ enum {
 		dash_h = 20,
 		rowcount = 4
 	 };
-
-struct controls {
-	Fl_Input *inpt[5];
-	Fl_Button *b[6];
-	DTable *tr;
-	Fl_Output *msg;
-};
 
 void start_GUI();
 void exit_cb(Fl_Widget *w, void *);
