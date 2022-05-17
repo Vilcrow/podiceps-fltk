@@ -23,8 +23,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <FL/Fl_Output.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_Table_Row.H>
-#include <vector>
-#include <string>
 #include "DFile.H"
 #include "DHandler.H"
 #include "DGraph.H"
@@ -41,10 +39,10 @@ static const char *bname[] = { N_("@+"), N_("@line"), _("Amend"),
 DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	Fl_Table_Row(x, y, w, h, l)
 {
-	ctrl = nullptr;
+	ctrl = 0;
 	last_col = 0;
 	reverse = false;
-	UpdateVec();
+	UpdateStringsList();
 	cols(4);
 	col_header(1);
 	col_resize(1);
@@ -64,15 +62,15 @@ int DTable::handle(int e)
 		for(int r = 0; r <rows(); ++r) {
 			for(int c = 0; c < cols(); ++c) {
 				if(row_selected(r)) {
-					ParsedStr ps(rows_vec[r].c_str());
+					ParsedStr *ps = sl[r];
 					ctrl->inpt[0]->value("");
 					ctrl->inpt[1]->value("");
 					ctrl->inpt[2]->value("");
 					ctrl->inpt[3]->value("");
-					ctrl->inpt[0]->value(ps.Original());
-					ctrl->inpt[1]->value(ps.Translation());
-					ctrl->inpt[2]->value(ps.WStatus());
-					ctrl->inpt[3]->value(ps.Date());
+					ctrl->inpt[0]->value(ps->Original());
+					ctrl->inpt[1]->value(ps->Translation());
+					ctrl->inpt[2]->value(ps->WStatus());
+					ctrl->inpt[3]->value(ps->Date());
 					ctrl->inpt[0]->take_focus();
 				}
 			}
@@ -111,7 +109,6 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 	int index = 0;
 	static char s[ParsedStr::orglen];
 	static char buf[ParsedStr::srclen];
-	ParsedStr ps(rows_vec[row].c_str());
 	switch(context) {
 	case CONTEXT_STARTPAGE:
 		fl_font(FL_HELVETICA, 12);
@@ -141,16 +138,16 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 	case CONTEXT_CELL: {
 		switch(col) {
 		case 0:
-			strncpy(buf, ps.Original(), ParsedStr::orglen);
+			strncpy(buf, sl[row]->Original(), ParsedStr::orglen);
 			break;
 		case 1:
-			strncpy(buf, ps.Translation(), ParsedStr::trllen);
+			strncpy(buf, sl[row]->Translation(), ParsedStr::trllen);
 			break;
 		case 2:
-			strncpy(buf, ps.WStatus(), ParsedStr::stlen);
+			strncpy(buf, sl[row]->WStatus(), ParsedStr::stlen);
 			break;
 		case 3:
-			strncpy(buf, ps.Date(), ParsedStr::dtlen);
+			strncpy(buf, sl[row]->Date(), ParsedStr::dtlen);
 			break;
 		}
 		int selected = row_selected(row);
@@ -273,7 +270,7 @@ void exit_cb(Fl_Widget *w, void *)
 
 void DTable::Refresh()
 {
-	UpdateVec();
+	UpdateStringsList();
 	redraw();
 	ctrl->inpt[0]->take_focus();
 }
@@ -403,18 +400,57 @@ void DTable::sort_col(int col, bool rev)
 	Refresh();
 }
 
-void DTable::UpdateVec()
+void DTable::UpdateStringsList()
 {
-	rows_vec.clear();
+	sl.Clear();
 	DFile dic;
 	int rows_t = 0;
 	dic.OpenR(paths[0]);
 	char buf[ParsedStr::srclen];
 	while(fgets(buf, sizeof(buf), dic.Fl())) {
-		std::string s(buf);
-		rows_vec.push_back(s);
+		sl.Add(buf);
 		++rows_t;
 	}
 	dic.Close();
 	rows(rows_t);
+}
+
+void StringsList::Add(const char *s)
+{
+	if(first == 0) {
+		first = new string;	
+		first->ps = s;
+		first->next = 0;
+		last = first;
+	}
+	else {
+		last->next = new string;
+		last = last->next;
+		last->ps = s;
+		last->next = 0;
+	}
+}
+
+void StringsList::Clear()
+{
+	string *tmp = first;
+	while(tmp != 0) {
+		first = tmp->next;
+		delete tmp;
+		tmp = first;
+	}
+}
+
+ParsedStr* StringsList::operator[](unsigned int ind)
+{
+	unsigned int i = 0;
+	string *tmp = first;
+	while(tmp != 0) {
+		if(i == ind) {
+			return &(tmp->ps);
+		}	
+		tmp = tmp->next;
+		++i;
+	}
+	return 0;
 }

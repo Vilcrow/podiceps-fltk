@@ -20,8 +20,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #ifndef DGRAPH_H_SENTRY
 #define DGRAPH_H_SENTRY
 
-#include <vector>
-#include <string>
 #include <FL/Fl_Table_Row.H>
 
 class DTable;
@@ -33,11 +31,29 @@ struct controls {
 	Fl_Output *msg;
 };
 
+class StringsList {
+	struct string {
+		ParsedStr ps;
+		string *next;	
+	};
+	string *first;
+	string *last;
+public:
+	StringsList() : first(0), last(0) {}
+	~StringsList() { Clear(); }
+	void Add(const char *s);
+	void Clear();
+	ParsedStr* operator[](unsigned int ind);
+private:
+	StringsList(const StringsList&) {}
+	void operator=(const StringsList&) {}
+};
+
 class DTable : public Fl_Table_Row {
 	int last_col;
 	bool reverse;
 	controls *ctrl;
-	std::vector<std::string> rows_vec;
+	StringsList sl;
 protected:
 	void draw_cell(TableContext context, int r, int c, int x, int y, int w, int h);
 	void draw_sort_arrow(int x, int y, int w, int h);
@@ -52,7 +68,7 @@ private:
 	static void event_callback(Fl_Widget *w, void *user)
 					{ ((DTable*)w)->event_callback2(); }
 	void event_callback2();
-	void UpdateVec();
+	void UpdateStringsList();
 };
 
 enum { 

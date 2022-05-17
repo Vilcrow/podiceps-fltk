@@ -26,9 +26,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class DFile {
 	FILE* fl;
 public:
-	DFile() { fl = nullptr; } //file don't opened
+	DFile() { fl = 0; } //file don't opened
 	~DFile() { Close(); }
-	inline void Close() { if(fl) fclose(fl); fl = nullptr; }
+	inline void Close() { if(fl) fclose(fl); fl = 0; }
 	inline FILE* Fl() const { return fl; }
 	void OpenR(const char*); //mode "r"
 	void OpenW(const char*); //mode "w"

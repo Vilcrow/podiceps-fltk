@@ -65,7 +65,7 @@ void delete_word(const char* word)
 
 void change_original(const char* old_word, const char* new_word)
 {
-	if(new_word == nullptr)
+	if(new_word == 0)
 		throw InputError(6, _("New word"), _("Empty input"));
 	ParsedStr oldp;
 	oldp.Original(old_word);
@@ -94,7 +94,7 @@ void change_original(const char* old_word, const char* new_word)
 
 void change_translation(const char* word, const char* new_word)
 {
-	if(new_word == nullptr)
+	if(new_word == 0)
 		throw InputError(6, _("New word"), _("Empty input"));
 	ParsedStr ps(word, new_word);
 	ps.ReplaceByOriginalInFile();
@@ -202,8 +202,8 @@ cl_arg* get_arguments(int argc, char **argv)
 	cl_arg *cla = new cl_arg;
 	cla->act = a_add;
 	cla->rp = rp_origl;
-	cla->arg1 = nullptr;
-	cla->arg2 = nullptr;
+	cla->arg1 = 0;
+	cla->arg2 = 0;
 	int opt;
 	opterr = 0; //getopt doesn't print any messages
 	while((opt = getopt(argc, argv, N_("ha:d:O:T:S:o:t:s:D:crRxX"))) != -1) {
@@ -327,18 +327,18 @@ ps_item* ps_list()
 	DFile cur;
 	cur.OpenR(paths[0]);
 	char buf[ParsedStr::srclen];
-	ps_item *first = nullptr;
-	ps_item *tmp = nullptr;
+	ps_item *first = 0;
+	ps_item *tmp = 0;
 	while(fgets(buf, sizeof(buf), cur.Fl())) {
-		if(first == nullptr) {
+		if(first == 0) {
 			first = new ps_item;
-			first->next = nullptr;
+			first->next = 0;
 			tmp = first;
 		}
 		else {
 			tmp->next = new ps_item;
 			tmp = tmp->next;
-			tmp->next = nullptr;
+			tmp->next = 0;
 		}
 		tmp->ps = buf;
 	}
@@ -349,19 +349,19 @@ ps_item* ps_list()
 ps_item* sort_orgl(ps_item *ps)
 {
 	ps_item *of = ps;
-	if(of == nullptr)
+	if(of == 0)
 		return of;
-	ps_item *tmp = nullptr;
-	ps_item *nf = nullptr;
-	ps_item *ntmp = nullptr;
-	ps_item *ntmpp = nullptr;
+	ps_item *tmp = 0;
+	ps_item *nf = 0;
+	ps_item *ntmp = 0;
+	ps_item *ntmpp = 0;
 	bool done = false;
-	while(of != nullptr) {
+	while(of != 0) {
 		tmp = of;
 		of = of->next;
-		if(nf == nullptr) {
+		if(nf == 0) {
 			nf = tmp;
-			nf->next = nullptr;
+			nf->next = 0;
 			done = true;
 		}
 		else {
@@ -370,9 +370,9 @@ ps_item* sort_orgl(ps_item *ps)
 		}
 		while(!done) {
 			if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
-				if(ntmp->next == nullptr) {
+				if(ntmp->next == 0) {
 					ntmp->next = tmp;
-					tmp->next = nullptr;
+					tmp->next = 0;
 					done = true;
 				}
 				else {
@@ -397,19 +397,19 @@ ps_item* sort_orgl(ps_item *ps)
 ps_item* sort_trll(ps_item *ps)
 {
 	ps_item *of = ps;
-	if(of == nullptr)
+	if(of == 0)
 		return of;
-	ps_item *tmp = nullptr;
-	ps_item *nf = nullptr;
-	ps_item *ntmp = nullptr;
-	ps_item *ntmpp = nullptr;
+	ps_item *tmp = 0;
+	ps_item *nf = 0;
+	ps_item *ntmp = 0;
+	ps_item *ntmpp = 0;
 	bool done = false;
-	while(of != nullptr) {
+	while(of != 0) {
 		tmp = of;
 		of = of->next;
-		if(nf == nullptr) {
+		if(nf == 0) {
 			nf = tmp;
-			nf->next = nullptr;
+			nf->next = 0;
 			done = true;
 		}
 		else {
@@ -418,9 +418,9 @@ ps_item* sort_trll(ps_item *ps)
 		}
 		while(!done) {
 			if(strcmp(tmp->ps.Translation(), ntmp->ps.Translation()) > 0) {
-				if(ntmp->next == nullptr) {
+				if(ntmp->next == 0) {
 					ntmp->next = tmp;
-					tmp->next = nullptr;
+					tmp->next = 0;
 					done = true;
 				}
 				else {
@@ -430,9 +430,9 @@ ps_item* sort_trll(ps_item *ps)
 			}
 			else if(strcmp(tmp->ps.Translation(), ntmp->ps.Translation()) == 0) {
 				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
-					if(ntmp->next == nullptr) {
+					if(ntmp->next == 0) {
 						ntmp->next = tmp;
-						tmp->next = nullptr;
+						tmp->next = 0;
 						done = true;
 					}
 					else {
@@ -466,19 +466,19 @@ ps_item* sort_trll(ps_item *ps)
 ps_item* sort_st(ps_item *ps)
 {
 	ps_item *of = ps;
-	if(of == nullptr)
+	if(of == 0)
 		return of;
-	ps_item *tmp = nullptr;
-	ps_item *nf = nullptr;
-	ps_item *ntmp = nullptr;
-	ps_item *ntmpp = nullptr;
+	ps_item *tmp = 0;
+	ps_item *nf = 0;
+	ps_item *ntmp = 0;
+	ps_item *ntmpp = 0;
 	bool done = false;
-	while(of != nullptr) {
+	while(of != 0) {
 		tmp = of;
 		of = of->next;
-		if(nf == nullptr) {
+		if(nf == 0) {
 			nf = tmp;
-			nf->next = nullptr;
+			nf->next = 0;
 			done = true;
 		}
 		else {
@@ -487,9 +487,9 @@ ps_item* sort_st(ps_item *ps)
 		}
 		while(!done) {
 			if(strcmp(tmp->ps.WStatus(), ntmp->ps.WStatus()) > 0) {
-				if(ntmp->next == nullptr) {
+				if(ntmp->next == 0) {
 					ntmp->next = tmp;
-					tmp->next = nullptr;
+					tmp->next = 0;
 					done = true;
 				}
 				else {
@@ -499,9 +499,9 @@ ps_item* sort_st(ps_item *ps)
 			}
 			else if(strcmp(tmp->ps.WStatus(), ntmp->ps.WStatus()) == 0) {
 				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
-					if(ntmp->next == nullptr) {
+					if(ntmp->next == 0) {
 						ntmp->next = tmp;
-						tmp->next = nullptr;
+						tmp->next = 0;
 						done = true;
 					}
 					else {
@@ -535,19 +535,19 @@ ps_item* sort_st(ps_item *ps)
 ps_item* sort_dt(ps_item *ps)
 {
 	ps_item *of = ps;
-	if(of == nullptr)
+	if(of == 0)
 		return of;
-	ps_item *tmp = nullptr;
-	ps_item *nf = nullptr;
-	ps_item *ntmp = nullptr;
-	ps_item *ntmpp = nullptr;
+	ps_item *tmp = 0;
+	ps_item *nf = 0;
+	ps_item *ntmp = 0;
+	ps_item *ntmpp = 0;
 	bool done = false;
-	while(of != nullptr) {
+	while(of != 0) {
 		tmp = of;
 		of = of->next;
-		if(nf == nullptr) {
+		if(nf == 0) {
 			nf = tmp;
-			nf->next = nullptr;
+			nf->next = 0;
 			done = true;
 		}
 		else {
@@ -556,9 +556,9 @@ ps_item* sort_dt(ps_item *ps)
 		}
 		while(!done) {
 			if(ParsedStr::CmpDates(tmp->ps.Date(), ntmp->ps.Date()) > 0) {
-				if(ntmp->next == nullptr) {
+				if(ntmp->next == 0) {
 					ntmp->next = tmp;
-					tmp->next = nullptr;
+					tmp->next = 0;
 					done = true;
 				}
 				else {
@@ -568,9 +568,9 @@ ps_item* sort_dt(ps_item *ps)
 			}
 			else if(ParsedStr::CmpDates(tmp->ps.Date(), ntmp->ps.Date())  == 0) {
 				if(strcmp(tmp->ps.Original(), ntmp->ps.Original()) > 0) {
-					if(ntmp->next == nullptr) {
+					if(ntmp->next == 0) {
 						ntmp->next = tmp;
-						tmp->next = nullptr;
+						tmp->next = 0;
 						done = true;
 					}
 					else {
@@ -606,7 +606,7 @@ void write_to_file(ps_item *ps)
 	DFile cur;
 	cur.OpenW(paths[0]);
 	ps_item *tmp = ps;
-	while(ps != nullptr) {
+	while(ps != 0) {
 		fputs(ps->ps.SourceString(), cur.Fl());
 		tmp = ps;
 		ps = ps->next;
@@ -617,14 +617,14 @@ void write_to_file(ps_item *ps)
 
 ps_item* reverse_list(ps_item *ps)
 {
-	ps_item *tmp = nullptr;
-	ps_item *nf = nullptr; //first item in new list
-	while(ps != nullptr) {
+	ps_item *tmp = 0;
+	ps_item *nf = 0; //first item in new list
+	while(ps != 0) {
 		tmp = ps;
 		ps = ps->next;
-		if(nf == nullptr) {
+		if(nf == 0) {
 			nf = tmp;
-			tmp->next = nullptr;
+			tmp->next = 0;
 		}
 		else {
 			tmp->next = nf;
@@ -641,7 +641,7 @@ void find_words(find_pattern *p)
 	ps_item *tmp_prev = tmp;
 	bool cmp;
 	bool done = false;
-	while(tmp != nullptr) {
+	while(tmp != 0) {
 		switch(p->rp) {
 		case rp_origl:
 			cmp = is_match(tmp->ps.Original(), p->patt);

@@ -118,7 +118,7 @@ void ParsedStr::Original(const char *ns)
 {
 	if(strlen(ns) >= orglen)
 		throw InputError(2, ns, _("Too long string"));
-	else if(ns == nullptr)
+	else if(ns == 0)
 		throw InputError(6, _("New word"), _("Empty input"));
 	int i = 0;
 	while(ns[i] != '\0') {
@@ -133,7 +133,7 @@ void ParsedStr::Translation(const char *ns)
 {
 	if(strlen(ns) >= trllen)
 		throw InputError(2, ns, _("Too long string"));
-	else if(ns == nullptr)
+	else if(ns == 0)
 		throw InputError(6, _("New word"), _("Empty input"));
 	int i = 0;
 	while(ns[i] != '\0') {
@@ -146,7 +146,7 @@ void ParsedStr::Translation(const char *ns)
 
 void ParsedStr::WStatus(const char *ns)
 {
-	if(ns == nullptr) {
+	if(ns == 0) {
 		if(strcmp(status, _("new")) == 0) {
 			strcpy(status, _("remembered"));
 			RefreshSourceString();
@@ -354,7 +354,7 @@ char* ParsedStr::GetCurrentDate()
 ParsedStr::ParsedStr(const char *ostr, const char *tstr) : ParsedStr()
 {
 	Original(ostr);
-	if(tstr != nullptr)
+	if(tstr != 0)
 		Translation(tstr);
 }
 ParsedStr::~ParsedStr()
@@ -379,7 +379,7 @@ char* ParsedStr::FindByOriginal() const
 	DFile tmp;
 	tmp.OpenR(paths[0]);
 	char buf[srclen];
-	char *s = nullptr;
+	char *s = 0;
 	while(fgets(buf, sizeof(buf), tmp.Fl())) {
 		ParsedStr ps(buf);
 		if(strcmp(origl, ps.Original()) == 0) {
