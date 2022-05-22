@@ -1,7 +1,7 @@
 /*
-podiceps - pocket dictonary
+podiceps - pocket dictionary
 
-Copyright (C) 2022 S.V.I 'Vilcrow', <www.vilcrow.net>
+Copyright (C) 2022 S.V.I 'Vilcrow', <vilcrow.net>
 --------------------------------------------------------------------------------
 LICENCE:
 This program is free software: you can redistribute it and/or modify
@@ -28,8 +28,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DGraph.H"
 #include "DError.H"
 
-extern char *paths[3];
-
 static const char *colsname[] = { _("Original"), _("Translation"),
 								  _("Status"), _("Date") };
 
@@ -40,9 +38,8 @@ DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	Fl_Table_Row(x, y, w, h, l)
 {
 	ctrl = 0;
-	last_col = 0;
+	last_col = -1;
 	reverse = false;
-	UpdateStringsList();
 	cols(4);
 	col_header(1);
 	col_resize(1);
@@ -62,7 +59,7 @@ int DTable::handle(int e)
 		for(int r = 0; r <rows(); ++r) {
 			for(int c = 0; c < cols(); ++c) {
 				if(row_selected(r)) {
-					ParsedStr *ps = sl[r];
+					ParsedStr *ps = (*ctrl->word_list)[r];
 					ctrl->inpt[0]->value("");
 					ctrl->inpt[1]->value("");
 					ctrl->inpt[2]->value("");
@@ -95,7 +92,7 @@ void DTable::event_callback2()
 			else {
 				reverse = false;
 			}
-			sort_col(c, reverse);
+			sort_col((enum reqpart)c, reverse);
 			last_col = c;
 		}
 	default:
@@ -138,22 +135,22 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 	case CONTEXT_CELL: {
 		switch(col) {
 		case 0:
-			strncpy(buf, sl[row]->Original(), ParsedStr::orglen);
+			strncpy(buf, (*ctrl->word_list)[row]->Original(), ParsedStr::orglen);
 			break;
 		case 1:
-			strncpy(buf, sl[row]->Translation(), ParsedStr::trllen);
+			strncpy(buf, (*ctrl->word_list)[row]->Translation(), ParsedStr::trllen);
 			break;
 		case 2:
-			strncpy(buf, sl[row]->WStatus(), ParsedStr::stlen);
+			strncpy(buf,(*ctrl->word_list)[row]->WStatus(), ParsedStr::stlen);
 			break;
 		case 3:
-			strncpy(buf, sl[row]->Date(), ParsedStr::dtlen);
+			strncpy(buf, (*ctrl->word_list)[row]->Date(), ParsedStr::dtlen);
 			break;
 		}
 		int selected = row_selected(row);
 		fl_draw_box(FL_THIN_UP_BOX, x, y, w, h, selected ? FL_YELLOW : FL_WHITE);
 		fl_push_clip(x, y, w, h);
-		fl_font(FL_HELVETICA, 14);
+		fl_font(FL_HELVETICA, font_size);
 		fl_color(FL_BLACK);
 		fl_draw(buf, x, y, w, h, FL_ALIGN_LEFT);
 		fl_pop_clip();
@@ -162,11 +159,11 @@ void DTable::draw_cell(TableContext context, int row = 0, int col = 0,
 	default:
 		return;
 	}
-	if(col_width(0) >= ctrl->tr->w() || col_width(1) >= ctrl->tr->w() ||
-										col_width(2) >= ctrl->tr->w())
-		col_width_all(ctrl->tr->w()/4);
+	if(col_width(0) >= ctrl->table->w() || col_width(1) >= ctrl->table->w() ||
+										col_width(2) >= ctrl->table->w())
+		col_width_all(ctrl->table->w()/4);
 	//table fills all available field of window by expanding the last column
-	int lc_w = ctrl->tr->w() - col_width(0) - col_width(1) - col_width(2)
+	int lc_w = ctrl->table->w() - col_width(0) - col_width(1) - col_width(2)
 										- Fl::scrollbar_size()-frame;
 	col_width(3, lc_w);
 }
@@ -203,12 +200,14 @@ void start_GUI()
 	int x = frame;
 	int y = frame;
 	controls *ctrl = new controls;
-	ctrl->tr = new DTable(x, y, 4*input_w+20, 20*input_h);
-	ctrl->tr->selection_color(FL_YELLOW);
-	ctrl->tr->col_header(1);
-	ctrl->tr->when(FL_WHEN_RELEASE);
-	ctrl->tr->SetCtrl(ctrl);
-	win->resizable(ctrl->tr);
+	ctrl->word_list = new WordList;
+	ctrl->table = new DTable(x, y, 4*input_w+20, 20*input_h);
+	ctrl->table->rows(ctrl->word_list->Count());
+	ctrl->table->selection_color(FL_YELLOW);
+	ctrl->table->col_header(1);
+	ctrl->table->when(FL_WHEN_RELEASE);
+	ctrl->table->SetCtrl(ctrl);
+	win->resizable(ctrl->table);
 	y += 21*input_h;
 	for(int i = 0; i < 4; ++i) {
 		ctrl->inpt[i] = new Fl_Input(x, y, input_w, input_h);		
@@ -270,7 +269,7 @@ void exit_cb(Fl_Widget *w, void *)
 
 void DTable::Refresh()
 {
-	UpdateStringsList();
+	rows(ctrl->word_list->Count());
 	redraw();
 	ctrl->inpt[0]->take_focus();
 }
@@ -279,9 +278,10 @@ void add_cb(Fl_Widget *w, void *user)
 {
 	controls *c = (controls*)user;
 	try {
-		if(strcmp(c->inpt[0]->value(), "") != 0) {
-			add_word(c->inpt[0]->value(), c->inpt[1]->value(), c->inpt[2]->value());
-			c->tr->Refresh();
+		if(strcmp(c->inpt[0]->value(), "") != 0) { //for not empty input
+			c->word_list->Add(c->inpt[0]->value(), c->inpt[1]->value(),
+												c->inpt[2]->value());
+			c->table->Refresh();
 			c->msg->value("");
 		}
 		else
@@ -290,38 +290,62 @@ void add_cb(Fl_Widget *w, void *user)
 	catch(const InputError &ie) {
 		c->msg->value(ie.Comment());
 	}
+	c->word_list->WriteToFile();
 	c->inpt[0]->take_focus();
 }
 
 void find_cb(Fl_Widget *w, void *user)
 {
 	controls *c = (controls*)user;
-	find_pattern *p = new find_pattern;
-	if(strcmp(c->inpt[0]->value(), "") != 0) {
-		p->patt = c->inpt[0]->value();
-		p->rp = rp_origl;
-	}
-	else if(strcmp(c->inpt[1]->value(), "") != 0) {
-		p->patt = c->inpt[1]->value();
-		p->rp = rp_tranl;
-	}
-	else if(strcmp(c->inpt[2]->value(), "") != 0) {
-		p->patt = c->inpt[2]->value();
-		p->rp = rp_st;
-	}
-	else if(strcmp(c->inpt[3]->value(), "") != 0) {
-		p->patt = c->inpt[3]->value();
-		p->rp = rp_dt;
-	}
+	word *begin = c->word_list->First();
+	word *tmp = 0;
 	try {
-		find_words(p);
-		c->msg->value("");
+		if(strcmp(c->inpt[0]->value(), "") != 0) {
+			while(begin != 0) {
+				begin = c->word_list->Find(begin, c->inpt[0]->value(), rp_origl);
+				if(begin != 0) {
+					tmp = begin->next;
+					c->word_list->MoveForward(begin);
+					begin = tmp;
+				}
+			}	
+		}
+		else if(strcmp(c->inpt[1]->value(), "") != 0) {
+			while(begin != 0) {
+				begin = c->word_list->Find(begin, c->inpt[1]->value(), rp_tranl);
+				if(begin != 0) {
+					tmp = begin->next;
+					c->word_list->MoveForward(begin);
+					begin = tmp;
+				}
+			}	
+		}
+		else if(strcmp(c->inpt[2]->value(), "") != 0) {
+			while(begin != 0) {
+				begin = c->word_list->Find(begin, c->inpt[2]->value(), rp_st);
+				if(begin != 0) {
+					tmp = begin->next;
+					c->word_list->MoveForward(begin);
+					begin = tmp;
+				}
+			}	
+		}
+		else if(strcmp(c->inpt[3]->value(), "") != 0) {
+			while(begin != 0) {
+				begin = c->word_list->Find(begin, c->inpt[3]->value(), rp_dt);
+				if(begin != 0) {
+					tmp = begin->next;
+					c->word_list->MoveForward(begin);
+					begin = tmp;
+				}
+			}	
+		}
 	}
 	catch(const InputError &ie) {
 		c->msg->value(ie.Comment());
 	}
-	c->tr->redraw();
-	c->tr->row_position(0);
+	c->table->redraw();
+	c->table->row_position(0);
 	c->inpt[0]->take_focus();
 }
 
@@ -331,22 +355,25 @@ void amend_cb(Fl_Widget *w, void *user)
 	try {
 		if(strcmp(c->inpt[0]->value(), "") != 0) {
 			if(strcmp(c->inpt[4]->value(), "") != 0) {
-				change_original(c->inpt[0]->value(), c->inpt[4]->value());
+				c->word_list->Amend(c->inpt[0]->value(), c->inpt[4]->value(), rp_origl);
 				c->inpt[0]->value(c->inpt[4]->value());
 				c->inpt[4]->value("");
 			}
 			if(strcmp(c->inpt[1]->value(), "") != 0)
-				change_translation(c->inpt[0]->value(), c->inpt[1]->value());
+				c->word_list->Amend(c->inpt[0]->value(), c->inpt[1]->value(), rp_tranl);
 			if(strcmp(c->inpt[2]->value(), "") != 0)
-				change_status(c->inpt[0]->value(), c->inpt[2]->value());
-			c->tr->Refresh();
+				c->word_list->Amend(c->inpt[0]->value(), c->inpt[2]->value(), rp_st);
+			c->table->Refresh();
 			c->msg->value("");
 			c->inpt[0]->take_focus();
 		}
+		else
+			throw InputError(6, _("Original"), _("Empty input"));
 	}
 	catch(const InputError &ie) {
 		c->msg->value(ie.Comment());
 	}
+	c->word_list->WriteToFile();
 	c->inpt[0]->take_focus();
 }
 
@@ -355,14 +382,17 @@ void delete_cb(Fl_Widget *w, void *user)
 	controls *c = (controls*)user;
 	try {
 		if(strcmp(c->inpt[0]->value(), "") != 0) {
-			delete_word(c->inpt[0]->value());
-			c->tr->Refresh();
+			c->word_list->Delete(c->inpt[0]->value());
+			c->table->Refresh();
 			c->msg->value("");
 		}
+		else
+			throw InputError(6, _("Original"), _("Empty input"));
 	}
 	catch(const InputError &ie) {
 		c->msg->value(ie.Comment());
 	}
+	c->word_list->WriteToFile();
 	c->inpt[0]->take_focus();
 }
 
@@ -376,81 +406,9 @@ void clear_cb(Fl_Widget *w, void *user)
 	c->inpt[0]->take_focus();
 }
 
-void DTable::sort_col(int col, bool rev)
+void DTable::sort_col(enum reqpart col, bool rev)
 {
 	select_all_rows(0); //disable row selection
-	ps_item *first = ps_list();
-	switch(col) {
-	case rp_origl:
-		first = sort_orgl(first);
-		break;
-	case rp_tranl:
-		first = sort_trll(first);
-		break;
-	case rp_st:
-		first = sort_st(first);
-		break;
-	case rp_dt:
-		first = sort_dt(first);
-		break;
-	}
-	if(rev)
-		first = reverse_list(first);	
-	write_to_file(first);
+	ctrl->word_list->Sort(col, rev);
 	Refresh();
-}
-
-void DTable::UpdateStringsList()
-{
-	sl.Clear();
-	DFile dic;
-	int rows_t = 0;
-	dic.OpenR(paths[0]);
-	char buf[ParsedStr::srclen];
-	while(fgets(buf, sizeof(buf), dic.Fl())) {
-		sl.Add(buf);
-		++rows_t;
-	}
-	dic.Close();
-	rows(rows_t);
-}
-
-void StringsList::Add(const char *s)
-{
-	if(first == 0) {
-		first = new string;	
-		first->ps = s;
-		first->next = 0;
-		last = first;
-	}
-	else {
-		last->next = new string;
-		last = last->next;
-		last->ps = s;
-		last->next = 0;
-	}
-}
-
-void StringsList::Clear()
-{
-	string *tmp = first;
-	while(tmp != 0) {
-		first = tmp->next;
-		delete tmp;
-		tmp = first;
-	}
-}
-
-ParsedStr* StringsList::operator[](unsigned int ind)
-{
-	unsigned int i = 0;
-	string *tmp = first;
-	while(tmp != 0) {
-		if(i == ind) {
-			return &(tmp->ps);
-		}	
-		tmp = tmp->next;
-		++i;
-	}
-	return 0;
 }

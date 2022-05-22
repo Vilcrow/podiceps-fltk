@@ -1,7 +1,7 @@
 /*
-podiceps - pocket dictonary
+podiceps - pocket dictionary
 
-Copyright (C) 2022 S.V.I 'Vilcrow', <www.vilcrow.net>
+Copyright (C) 2022 S.V.I 'Vilcrow', <vilcrow.net>
 --------------------------------------------------------------------------------
 LICENCE:
 This program is free software: you can redistribute it and/or modify
@@ -24,68 +24,46 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 class DTable;
 
-struct controls {
-	Fl_Input *inpt[5];
-	Fl_Button *b[6];
-	DTable *tr;
-	Fl_Output *msg;
-};
-
-class StringsList {
-	struct string {
-		ParsedStr ps;
-		string *next;	
-	};
-	string *first;
-	string *last;
-public:
-	StringsList() : first(0), last(0) {}
-	~StringsList() { Clear(); }
-	void Add(const char *s);
-	void Clear();
-	ParsedStr* operator[](unsigned int ind);
-private:
-	StringsList(const StringsList&) {}
-	void operator=(const StringsList&) {}
+struct controls { //include pointers to:
+	WordList *word_list; //word list,
+	Fl_Input *inpt[5]; //input widgets,
+	Fl_Button *b[6]; //buttons,
+	Fl_Output *msg; //field for messages,
+	DTable *table; //table
 };
 
 class DTable : public Fl_Table_Row {
-	int last_col;
-	bool reverse;
+	int last_col; //number of last pressed column header
+	bool reverse; //order of column sorting
 	controls *ctrl;
-	StringsList sl;
 protected:
 	void draw_cell(TableContext context, int r, int c, int x, int y, int w, int h);
 	void draw_sort_arrow(int x, int y, int w, int h);
-	void sort_col(int col, bool rev = false);
+	void sort_col(enum reqpart col, bool rev = false); //sort pressed column
 public:
 	DTable(int x, int y, int w, int h, const char *l);
 	inline void SetCtrl(controls *c) { ctrl = c; }
 	int handle(int e);
-	void Refresh();
+	void Refresh(); //redraw the table
 	~DTable() {}
 private:
 	static void event_callback(Fl_Widget *w, void *user)
 					{ ((DTable*)w)->event_callback2(); }
 	void event_callback2();
-	void UpdateStringsList();
 };
 
 enum { 
-		frame = 5,
+		frame = 5, //size of frame
 		button_w = 80,
 		button_h = 20,
-		font_size = 20,
+		font_size = 14,
 		input_w = 170,
 		input_h = 20,
-		dash_w = 35,
-		dash_h = 20,
 		rowcount = 4
 	 };
 
 void start_GUI();
 void exit_cb(Fl_Widget *w, void *);
-void refresh_table(controls *c);
 void add_cb(Fl_Widget *w, void *user);
 void find_cb(Fl_Widget *w, void *user);
 void amend_cb(Fl_Widget *w, void *user);

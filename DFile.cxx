@@ -1,7 +1,7 @@
 /*
-podiceps - pocket dictonary
+podiceps - pocket dictionary
 
-Copyright (C) 2022 S.V.I 'Vilcrow', <www.vilcrow.net>
+Copyright (C) 2022 S.V.I 'Vilcrow', <vilcrow.net>
 --------------------------------------------------------------------------------
 LICENCE:
 This program is free software: you can redistribute it and/or modify
@@ -26,8 +26,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DHandler.H"
 #include "DError.H"
 
-char* paths[3];
-
+char* DFile::paths[2];
 //class DFile
 void DFile::OpenR(const char* name)
 {
@@ -47,14 +46,31 @@ void DFile::OpenW(const char* name)
 		throw FileError(name, _("Couldn't open."));
 }
 
-void DFile::OpenA(const char* name)
+void DFile::SetPaths()
 {
-	fl = fopen(name, "a");
-	if(!fl)
-		throw FileError(name, _("Couldn't open."));
+	const char *const paths_end[] = { N_(".podic.txt"), N_(".podic.txt.bak") };
+	for(int i = 0; i < 2; ++i) {
+		DFile::paths[i] = new char[pathlen];
+		char *s = FullPath(paths_end[i]);
+		strcpy(DFile::paths[i], s);
+		delete[] s;
+	}
 }
 
-//class ParsedStr
+void DFile::MakeBackup()
+{
+	DFile dictionary;
+	DFile backup;
+	dictionary.OpenR(DFile::paths[DFile::dictionary_file]);
+	backup.OpenW(DFile::paths[DFile::backup_file]);
+	char buf[ParsedStr::srclen];
+	while(fgets(buf, sizeof(buf), dictionary.Fl())) {
+		fputs(buf, backup.Fl());
+	}
+	dictionary.Close();
+	backup.Close();
+}
+
 ParsedStr::ParsedStr()
 {
 	str = new char[srclen];
@@ -87,9 +103,15 @@ void ParsedStr::Parse(const char *s)
 {
 	if(!IsCorrectString(s))
 		throw InputError(1, s, _("Incorrect string"));
-	strcpy(str, s);
-	int i = 1;
+	int i = 0;
 	int j = 0;
+	while(s[i] != '\n' && j < srclen) {
+		str[j++] = s[i++];
+	}
+	str[j++] = '\n';
+	str[j] = '\0';
+	i = 1;
+	j = 0;
 	while(s[i] != delimiter && j < orglen) {
 		origl[j++] = s[i++];
 	}
@@ -144,24 +166,22 @@ void ParsedStr::Translation(const char *ns)
 	RefreshSourceString();
 }
 
-void ParsedStr::WStatus(const char *ns)
+void ParsedStr::WStatus(const char *new_status)
 {
-	if(ns == 0) {
+	if(new_status == 0) {
 		if(strcmp(status, _("new")) == 0) {
 			strcpy(status, _("remembered"));
-			RefreshSourceString();
 		}
 		else {
 			strcpy(status, _("new"));
-			RefreshSourceString();
 		}
 	}
 	else {
-		strncpy(status, ns, stlen);
+		strncpy(status, new_status, stlen);
 		if(status[stlen-1] != '\0')
 			status[stlen-1] = '\0';
-		RefreshSourceString();
 	}
+	RefreshSourceString();
 }
 
 void ParsedStr::Date(const char *ns)
@@ -204,135 +224,42 @@ void ParsedStr::RefreshSourceString()
 	str[j++] = '\0';
 }
 
-bool ParsedStr::CmpByOriginal(const char *string) const
+bool ParsedStr::IsCorrectString(const char *s)
 {
-	ParsedStr ps(string);	
-	return (strcmp(origl, ps.Original()) ? false : true);
-}
-
-void ParsedStr::AddStringToFile() const //exception handling, need fix
-{
-	if(!IsCorrectString(SourceString()))
-		throw InputError(1, SourceString(), _("Incorrect string"));
-	int cmp;
-	char buf[srclen];
-	bool is = false; //word already exists in file?
-	DFile dest;
-	dest.OpenR(paths[0]);
-	while(fgets(buf, sizeof(buf), dest.Fl())) {
-		ParsedStr ps(buf);
-		cmp = strcmp(ps.Original(), Original());
-		if(cmp == 0) {
-			is = true;
-			break;
-		}
-	}
-	dest.Close();
-	if(!is) {
-		dest.OpenA(paths[0]);
-		fputs(str, dest.Fl());
-		dest.Close();
-	}
-	else
-		throw InputError(5, Original(), _("The word already exists"));
-}
-
-void ParsedStr::DeleteStringFromFile() const
-{
-	DFile dest;
-	DFile tmp;
-	dest.OpenR(paths[0]);
-	tmp.OpenW(paths[1]);
-	char buf[srclen];
-	bool done = false;
-	while(fgets(buf, sizeof(buf), dest.Fl())) {
-		if(!done) {
-			if(!CmpByOriginal(buf))
-				fputs(buf, tmp.Fl());
-			else
-				done = true;
-		}
-		else
-			fputs(buf, tmp.Fl());
-	}
-	dest.Close();
-	tmp.Close();
-	if(!done)
-		throw InputError(4, Original(), _("The word don't exist"));
-	int code;
-	code = rename(paths[1], paths[0]);
-	if(code != 0)
-		throw FileError(paths[1], _("Renaming failed"));
-}
-
-void ParsedStr::ReplaceByOriginalInFile()
-{
-	DFile dest;
-	DFile tmp;
-	dest.OpenR(paths[0]);
-	tmp.OpenW(paths[1]);
-	char buf[srclen];
-	bool done = false;
-	while(fgets(buf, sizeof(buf), dest.Fl())) {
-		if(!done) {
-			if(!CmpByOriginal(buf))
-				fputs(buf, tmp.Fl());
-			else {
-				fputs(str, tmp.Fl());	
-				strcpy(str, buf);
-				Parse(str);
-				done = true;
-			}
-		}
-		else
-			fputs(buf, tmp.Fl());
-	}
-	dest.Close();
-	tmp.Close();
-	int code;
-	code = rename(paths[1], paths[0]);
-	if(code != 0)
-		throw FileError(paths[1], _("Renaming failed"));
-	if(!done)
-		throw InputError(4, Original(), _("The word don't exist"));
-}
-
-bool ParsedStr::IsCorrectString(const char *string)
-{
-	if(strlen(string) > srclen-1)
+	if(strlen(s) > srclen-1)
 		return false;
 	int count = 0;
 	int i = 0;
-	while(string[i] != '\0') {  //count of delimiters
-		if(string[i] == delimiter)
+	while(s[i] != '\0') {  //count of delimiters
+		if(s[i] == delimiter)
 			++count;
 		++i;
 	}
 	if(count != pcount)
 		return false;
-	if(string[0] != delimiter)
+	if(s[0] != delimiter)
 		return false;
 	i = 1;
 	count = 0;
-	while(string[i++] != delimiter) { //lenght of original word
+	while(s[i++] != delimiter) { //lenght of original word
 		++count;
 	}
 	if(count >= orglen)
 		return false;	
 	count = 0;
-	while(string[i++] != delimiter) { //lenght of translation
+	while(s[i++] != delimiter) { //lenght of translation
 		++count;
 	}
 	if(count >= trllen)
 		return false;	
 	count = 0;
-	while(string[i++] != delimiter) { //lenght of status
+	while(s[i++] != delimiter) { //lenght of status
 		++count;
 	}
 	if(count >= stlen)
 		return false;	
 	count = 0;
-	while(string[i++] != '\n') { //lenght of date
+	while(s[i++] != '\n') { //lenght of date
 		++count;
 	}
 	if(count >= dtlen)
@@ -372,39 +299,6 @@ const ParsedStr& ParsedStr::operator=(const char *s)
 		throw InputError(2, s, _("Too long string"));
 	Parse(s);
 	return *this;
-}
-
-char* ParsedStr::FindByOriginal() const
-{
-	DFile tmp;
-	tmp.OpenR(paths[0]);
-	char buf[srclen];
-	char *s = 0;
-	while(fgets(buf, sizeof(buf), tmp.Fl())) {
-		ParsedStr ps(buf);
-		if(strcmp(origl, ps.Original()) == 0) {
-			s = new char[srclen];
-			strcpy(s, buf);
-			tmp.Close();
-			return s;
-		}
-	}
-	tmp.Close();
-	s = new char[srclen];
-	s[0] = '\0'; //return empty string
-	return s;
-}
-
-void ParsedStr::SetPaths()
-{
-	const char *const paths_end[] = { N_(".podic.txt"), N_(".podictmp.txt"),
-									  N_(".podic.txt.bak") };
-	for(int i = 0; i < pathcnt; ++i) {
-		paths[i] = new char[pathlen];
-		char *s = FullPath(paths_end[i]);
-		strcpy(paths[i], s);
-		delete[] s;
-	}
 }
 
 const int ParsedStr::CmpDates(const char *d1, const char *d2)
@@ -454,10 +348,10 @@ void ParsedStr::DateToYMD(char *dt)
 	strcpy(dt, ndate);
 }
 
-char* ParsedStr::FullPath(const char *name)
+char* DFile::FullPath(const char *name)
 {
 	const char *hmp = getenv(N_("HOME"));
-	char fpath[pathlen];
+	char fpath[DFile::pathlen];
 	strncpy(fpath, hmp, pathlen-1);
 	if(fpath[pathlen-1] != '\0')
 		throw InputError(1, name, _("Incorrect string"));
@@ -478,14 +372,294 @@ char* ParsedStr::FullPath(const char *name)
 	return s;
 }
 
-void make_bak_file()
+WordList::WordList()
 {
-	DFile dic;
-	DFile bak;
-	dic.OpenR(paths[0]);
-	bak.OpenW(paths[2]);
+	count = 0;
+	first = 0;
+	last = 0;
+	DFile dictionary;
+	dictionary.OpenR(DFile::paths[DFile::dictionary_file]);
 	char buf[ParsedStr::srclen];
-	while(fgets(buf, sizeof(buf), dic.Fl())) {
-		fputs(buf, bak.Fl());
+	while(fgets(buf, sizeof(buf), dictionary.Fl())) {
+		Add(buf);
+	}
+	dictionary.Close();
+}
+
+void WordList::Add(const char *s)
+{
+	if(first == 0) {
+		first = new word;	
+		first->ps = s;
+		first->next = 0;
+		last = first;
+	}
+	else {
+		last->next = new word;
+		last = last->next;
+		last->ps = s;
+		last->next = 0;
+	}
+	++count;
+}
+
+void WordList::Add(const char *original, const char *translation,
+												const char *status)
+{
+	ParsedStr ps(original, translation);
+	if(strcmp(status, "") != 0)
+		ps.WStatus(status);
+	Add(ps.SourceString());
+}
+
+void WordList::Clear()
+{
+	word *tmp = first;
+	while(tmp != 0) {
+		first = tmp->next;
+		delete tmp;
+		tmp = first;
+	}
+}
+
+ParsedStr* WordList::operator[](unsigned int ind)
+{
+	unsigned int i = 0;
+	word *tmp = first;
+	while(tmp != 0) {
+		if(i == ind) {
+			return &(tmp->ps);
+		}	
+		tmp = tmp->next;
+		++i;
+	}
+	return 0;  //ind exceeds the count of elements in list
+}
+
+word* WordList::Swap(word *prev, word *left)
+{
+	word *right = left->next;
+	if(prev == 0) { //left is pointer to first element in list
+		if(right == 0) //right don't exist
+			return left;
+		left->next = right->next;
+		right->next = left;
+		first = right;
+		return left;
+	}
+	else {
+		if(right == 0)
+			return left;
+		left->next = right->next;
+		prev->next = right;
+		right->next = left;
+		if(right == last)
+			last = left;
+		return left;
+	}
+}
+
+void WordList::Reverse()
+{
+	word *tmp = 0;
+	word *new_first = 0; //first item in new list
+	last = first;
+	while(first != 0) {
+		tmp = first;
+		first = first->next;
+		if(new_first == 0) {
+			new_first = tmp;
+			tmp->next = 0;
+		}
+		else {
+			tmp->next = new_first;
+			new_first = tmp;	
+		}
+	}
+	first = new_first;
+}
+
+void WordList::Sort(enum reqpart rp, bool reverse)  //bubble sort
+{
+	if(first == 0) //empty list
+		return;
+	word *cur_last = last;
+	word *prev = 0;
+	word *left = 0;
+	word *right = 0;
+	int cmp = 0;
+	while(cur_last != first) {
+		left = first;
+		while(left != cur_last) {	
+			right = left->next;
+			switch(rp) {
+			case rp_origl:
+				cmp = strcmp(left->ps.Original(), right->ps.Original());
+				break;
+			case rp_tranl:
+				cmp = strcmp(left->ps.Translation(), right->ps.Translation());
+				break;
+			case rp_st:
+				cmp = strcmp(left->ps.WStatus(), right->ps.WStatus());
+				break;
+			case rp_dt:
+				cmp = ParsedStr::CmpDates(left->ps.Date(), right->ps.Date());
+				break;
+			}
+			if(cmp > 0) {
+				left = Swap(prev, left);	
+				if(right == cur_last)
+					break;
+				prev = right;
+				right = left->next;
+			}
+			else if(cmp == 0) {
+				cmp = strcmp(left->ps.Original(), right->ps.Original());
+				if(cmp > 0) {
+					left = Swap(prev, left);	
+					if(right == cur_last)
+						break;
+					prev = right;
+					right = left->next;
+				}
+				else {
+					prev = left;
+					left = right;
+					right = right->next;
+				}
+			}
+			else {
+				prev = left;
+				left = right;
+				right = right->next;
+			}
+		}
+		if(left == cur_last)
+			cur_last = prev;
+		prev = 0;
+	}
+	last = first;
+	while(last->next != 0) { //return the last pointer to the end of list
+		last = last->next;
+	}
+	if(reverse)
+		Reverse();
+	WriteToFile();
+}
+
+void WordList::WriteToFile() const
+{
+	DFile dictionary;
+	dictionary.OpenW(DFile::paths[DFile::dictionary_file]);
+	word *tmp = first;
+	while(tmp != 0) {
+		fputs(tmp->ps.SourceString(), dictionary.Fl());
+		tmp = tmp->next;
+	}
+	dictionary.Close();
+}
+
+void WordList::Delete(const char *original_name)
+{
+	word *tmp = first;
+	word *prev = 0;
+	bool done = false;
+	while(tmp != 0) {
+		if(strcmp(original_name, tmp->ps.Original()) == 0) {
+			if(prev == 0) //delete the first element
+				first = first->next;
+			else if(tmp == last) { //delete the last element
+				last = prev;
+				last->next = 0;
+			}
+			else
+				prev->next = tmp->next;
+			delete tmp;
+			--count;
+			done = true;
+			break;
+		}
+		prev = tmp;
+		tmp = tmp->next;
+	}
+	if(!done)
+		throw InputError(4, original_name, _("The word don't exist"));
+	else
+		WriteToFile();
+}
+
+void WordList::Amend(const char* original, const char* new_w, enum reqpart rp)
+{
+	if(new_w == 0)
+		throw InputError(6, _("New word"), _("Empty input"));
+	if(rp == rp_origl) {
+		word *ptr_new = Find(first, new_w, rp_origl);
+		if(ptr_new != 0)
+			throw InputError(5, new_w, _("The word already exist"));
+	}
+	word *ptr_old = Find(first, original, rp_origl);
+	if(ptr_old == 0)
+		throw InputError(4, original, _("The word don't exist"));
+	switch(rp) {
+	case rp_origl:
+		ptr_old->ps.Original(new_w);
+		break;
+	case rp_tranl:
+		ptr_old->ps.Translation(new_w);
+		break;
+	case rp_st:
+		ptr_old->ps.WStatus(new_w);
+		break;
+	case rp_dt:
+		ptr_old->ps.Date(new_w);
+		break;
+	}
+	WriteToFile();
+}
+
+word* WordList::Find(word *begin, const char *pattern,
+														enum reqpart rp) const
+{
+	bool cmp;
+	word *tmp = begin;
+	while(tmp != 0) {
+		switch(rp) {
+		case rp_origl:
+			cmp = is_match(tmp->ps.Original(), pattern);
+			break;
+		case rp_tranl:
+			cmp = is_match(tmp->ps.Translation(), pattern);
+			break;
+		case rp_st:
+			cmp = is_match(tmp->ps.WStatus(), pattern);
+			break;
+		case rp_dt:
+			cmp = is_match(tmp->ps.Date(), pattern);
+			break;
+		}
+		if(cmp)
+			return tmp;
+		else
+			tmp = tmp->next;
+	}
+	return 0; //word not found
+}
+
+void WordList::MoveForward(word *w)
+{
+	if(w != 0) {
+		if(w != first) {
+			word *prev = first; //find previous element
+			while(prev->next != w) {
+				prev = prev->next;
+			}
+			prev->next = w->next;
+			w->next = first;
+			first = w;
+			last = first;
+			while(last->next != 0) { //return the last pointer back
+				last = last->next;
+			}
+		}
 	}
 }
