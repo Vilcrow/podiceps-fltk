@@ -27,7 +27,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DError.H"
 
 char* DFile::paths[2];
-//class DFile
+
 void DFile::OpenR(const char* name)
 {
 	fl = fopen(name, "r");
@@ -388,6 +388,9 @@ WordList::WordList()
 
 void WordList::Add(const char *s)
 {
+	ParsedStr ps(s);
+	if(Find(first, ps.Original(), rp_origl) != 0) //word exists in list
+		throw InputError(5, ps.Original(), _("The word already exists"));
 	if(first == 0) {
 		first = new word;	
 		first->ps = s;
@@ -440,7 +443,7 @@ word* WordList::Swap(word *prev, word *left)
 {
 	word *right = left->next;
 	if(prev == 0) { //left is pointer to first element in list
-		if(right == 0) //right don't exist
+		if(right == 0) //right don't exists
 			return left;
 		left->next = right->next;
 		right->next = left;
@@ -513,7 +516,7 @@ void WordList::Sort(enum reqpart rp, bool reverse)  //bubble sort
 				prev = right;
 				right = left->next;
 			}
-			else if(cmp == 0) {
+			else if(cmp == 0) {  //for translation, status and date
 				cmp = strcmp(left->ps.Original(), right->ps.Original());
 				if(cmp > 0) {
 					left = Swap(prev, left);	
@@ -547,7 +550,7 @@ void WordList::Sort(enum reqpart rp, bool reverse)  //bubble sort
 	WriteToFile();
 }
 
-void WordList::WriteToFile() const
+void WordList::WriteToFile() const //rewrite the dictionary file
 {
 	DFile dictionary;
 	dictionary.OpenW(DFile::paths[DFile::dictionary_file]);
@@ -583,7 +586,7 @@ void WordList::Delete(const char *original_name)
 		tmp = tmp->next;
 	}
 	if(!done)
-		throw InputError(4, original_name, _("The word don't exist"));
+		throw InputError(4, original_name, _("The word don't exists"));
 	else
 		WriteToFile();
 }
@@ -595,11 +598,11 @@ void WordList::Amend(const char* original, const char* new_w, enum reqpart rp)
 	if(rp == rp_origl) {
 		word *ptr_new = Find(first, new_w, rp_origl);
 		if(ptr_new != 0)
-			throw InputError(5, new_w, _("The word already exist"));
+			throw InputError(5, new_w, _("The word already exists"));
 	}
 	word *ptr_old = Find(first, original, rp_origl);
 	if(ptr_old == 0)
-		throw InputError(4, original, _("The word don't exist"));
+		throw InputError(4, original, _("The word don't exists"));
 	switch(rp) {
 	case rp_origl:
 		ptr_old->ps.Original(new_w);
@@ -616,9 +619,9 @@ void WordList::Amend(const char* original, const char* new_w, enum reqpart rp)
 	}
 	WriteToFile();
 }
-
-word* WordList::Find(word *begin, const char *pattern,
-														enum reqpart rp) const
+//return pointer to the element in the list if it exists or zero pointer
+//the search start with the begin pointer
+word* WordList::Find(word *begin, const char *pattern, enum reqpart rp) const
 {
 	bool cmp;
 	word *tmp = begin;

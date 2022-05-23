@@ -74,6 +74,7 @@ public:
 	WordList(); //create list by dictionary file
 	~WordList() { Clear(); }
 	inline word* First() const { return first; }
+	inline word* Last() const { return last; }
 	//add word to end of list
 	void Add(const char *s); //s is source string for ParsedStr
 	void Add(const char *original, const char *translation,

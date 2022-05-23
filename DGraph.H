@@ -69,5 +69,6 @@ void find_cb(Fl_Widget *w, void *user);
 void amend_cb(Fl_Widget *w, void *user);
 void delete_cb(Fl_Widget *w, void *user);
 void clear_cb(Fl_Widget *w, void *user);
+void count_cb(Fl_Widget *w, void *user);
 
 #endif

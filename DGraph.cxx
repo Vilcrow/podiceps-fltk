@@ -32,7 +32,7 @@ static const char *colsname[] = { _("Original"), _("Translation"),
 								  _("Status"), _("Date") };
 
 static const char *bname[] = { N_("@+"), N_("@line"), _("Amend"),
-							   N_("@search"), _("Clear"), _("Quit") };
+							N_("@search"), _("Count"), _("Clear"), _("Quit") };
 
 DTable::DTable(int x, int y, int w, int h, const char *l = 0) :
 	Fl_Table_Row(x, y, w, h, l)
@@ -223,9 +223,9 @@ void start_GUI()
 	y += input_h + frame;
 	ctrl->inpt[4] = new Fl_Input(frame, y, input_w, input_h);
 	ctrl->inpt[4]->maximum_size(ParsedStr::orglen);
-	x = frame + input_w / 2;
+	x = frame + input_w / 4;
 	y += input_h + frame;
-	for(int i = 0; i < 6; ++i) {
+	for(int i = 0; i < 7; ++i) {
 		ctrl->b[i] = new Fl_Button(x, y, button_w, button_h, bname[i]);
 		ctrl->b[i]->box(FL_PLASTIC_UP_BOX);
 		x += frame + button_w;
@@ -246,11 +246,14 @@ void start_GUI()
 	ctrl->b[3]->callback(find_cb, (void*)ctrl);
 	ctrl->b[3]->tooltip(_("Search\n'CTRL+s'"));
 	ctrl->b[3]->shortcut(FL_CTRL+'s');
-	ctrl->b[4]->callback(clear_cb, (void*)ctrl);
-	ctrl->b[4]->tooltip(_("Clear the input fields\n'CTRL+c'"));
-	ctrl->b[4]->shortcut(FL_CTRL+'c');
-	ctrl->b[5]->callback(exit_cb, (void*)ctrl);
-	ctrl->b[5]->tooltip(_("Exit\n'ESC'"));
+	ctrl->b[4]->callback(count_cb, (void*)ctrl);
+	ctrl->b[4]->tooltip(_("Show the total count of words\n'CTRL+n'"));
+	ctrl->b[4]->shortcut(FL_CTRL+'n');
+	ctrl->b[5]->callback(clear_cb, (void*)ctrl);
+	ctrl->b[5]->tooltip(_("Clear the input fields\n'CTRL+c'"));
+	ctrl->b[5]->shortcut(FL_CTRL+'c');
+	ctrl->b[6]->callback(exit_cb, (void*)ctrl);
+	ctrl->b[6]->tooltip(_("Exit\n'ESC'"));
 	win->end();
 	win->show();
 	Fl::run();
@@ -281,6 +284,7 @@ void add_cb(Fl_Widget *w, void *user)
 		if(strcmp(c->inpt[0]->value(), "") != 0) { //for not empty input
 			c->word_list->Add(c->inpt[0]->value(), c->inpt[1]->value(),
 												c->inpt[2]->value());
+			c->word_list->MoveForward(c->word_list->Last());
 			c->table->Refresh();
 			c->msg->value("");
 		}
@@ -299,6 +303,7 @@ void find_cb(Fl_Widget *w, void *user)
 	controls *c = (controls*)user;
 	word *begin = c->word_list->First();
 	word *tmp = 0;
+	bool done = false;
 	try {
 		if(strcmp(c->inpt[0]->value(), "") != 0) {
 			while(begin != 0) {
@@ -307,8 +312,11 @@ void find_cb(Fl_Widget *w, void *user)
 					tmp = begin->next;
 					c->word_list->MoveForward(begin);
 					begin = tmp;
+					done = true;
 				}
 			}	
+			if(!done)
+				throw InputError(4, c->inpt[0]->value(), _("The word don't exists"));
 		}
 		else if(strcmp(c->inpt[1]->value(), "") != 0) {
 			while(begin != 0) {
@@ -317,8 +325,11 @@ void find_cb(Fl_Widget *w, void *user)
 					tmp = begin->next;
 					c->word_list->MoveForward(begin);
 					begin = tmp;
+					done = true;
 				}
-			}	
+			}
+			if(!done)
+				throw InputError(4, c->inpt[1]->value(), _("The word don't exists"));
 		}
 		else if(strcmp(c->inpt[2]->value(), "") != 0) {
 			while(begin != 0) {
@@ -327,8 +338,11 @@ void find_cb(Fl_Widget *w, void *user)
 					tmp = begin->next;
 					c->word_list->MoveForward(begin);
 					begin = tmp;
+					done = true;
 				}
-			}	
+			}
+			if(!done)
+				throw InputError(4, c->inpt[2]->value(), _("The word don't exists"));
 		}
 		else if(strcmp(c->inpt[3]->value(), "") != 0) {
 			while(begin != 0) {
@@ -337,8 +351,11 @@ void find_cb(Fl_Widget *w, void *user)
 					tmp = begin->next;
 					c->word_list->MoveForward(begin);
 					begin = tmp;
+					done = true;
 				}
-			}	
+			}
+			if(!done)
+				throw InputError(4, c->inpt[3]->value(), _("The word don't exists"));
 		}
 	}
 	catch(const InputError &ie) {
@@ -411,4 +428,13 @@ void DTable::sort_col(enum reqpart col, bool rev)
 	select_all_rows(0); //disable row selection
 	ctrl->word_list->Sort(col, rev);
 	Refresh();
+}
+
+void count_cb(Fl_Widget *w, void *user)
+{
+	controls *c = (controls*)user;
+	char s[ParsedStr::orglen];
+	sprintf(s, _("Total count: %d"), c->word_list->Count());
+	c->msg->value(s);
+	c->inpt[0]->take_focus();
 }
