@@ -43,6 +43,7 @@ void help_page()
 	printf(_("-R - Sort by translation.\n")); 
 	printf(_("-x - Sort by status.\n")); 
 	printf(_("-X - Sort by date.\n")); 
+	printf(_("-i - Invert the dictionary.\n")); 
 	printf(_("Without arguments - To run GUI.\n")); 
 }
 

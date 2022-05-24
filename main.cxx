@@ -19,6 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <unistd.h>
 #include <string.h>
+#include <getopt.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
@@ -34,6 +35,26 @@ int main(int argc, char** argv)
 {
 	DFile::SetPaths(); //set paths for dictionary and backup files
 	DFile::MakeBackup(); //create backup file
+	struct option const longopts[] =
+	{
+		{ "help", no_argument, NULL, 'h' },
+		{ "add", required_argument, NULL, 'a' },
+		{ "delete", required_argument, NULL, 'd'},
+		{ "amend-original", required_argument, NULL, 'O'},
+		{ "amend-translation", required_argument, NULL, 'T'},
+		{ "change-status", required_argument, NULL, 'S'},
+		{ "show-original", required_argument, NULL, 'o'},
+		{ "show-translation", required_argument, NULL, 't'},
+		{ "show-status", required_argument, NULL, 's'},
+		{ "show-date", required_argument, NULL, 'D'},
+		{ "count", no_argument, NULL, 'c'},
+		{ "sort-original", no_argument, NULL, 'r'},
+		{ "sort-translation", no_argument, NULL, 'R'},
+		{ "sort-status", no_argument, NULL, 'x'},
+		{ "sort-date", no_argument, NULL, 'X'},
+		{ "invert", no_argument, NULL, 'i'},
+		{NULL, 0, NULL, 0}
+	};
 	try {
 		if(argc == 1) { //run GUI
 			start_GUI();
@@ -42,8 +63,8 @@ int main(int argc, char** argv)
 			int opt;
 			opterr = 0; //getopt doesn't print any messages
 			WordList word_list;
-			while((opt = getopt(argc, argv,
-							N_("ha:d:O:T:S:o:t:s:D:crRxX"))) != -1) {
+			while((opt = getopt_long(argc, argv,
+							N_("ha:d:O:T:S:o:t:s:D:crRxXi"), longopts, NULL)) != -1) {
 				switch(opt) {
 				case 'h': //show help
 					help_page();
@@ -126,6 +147,10 @@ int main(int argc, char** argv)
 					return 0;
 				case 'X': //resort by date
 					word_list.Sort(rp_dt);
+					return 0;
+				case 'i': //invert list
+					word_list.Reverse();
+					word_list.WriteToFile();
 					return 0;
 				default: //incorrect argument
 					help_page();
