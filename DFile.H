@@ -57,7 +57,7 @@ private:
 	void Parse(const char *s); //make all parts by source string
 	void RefreshSourceString(); //used after editing of any parts
 	static char* GetCurrentDate(); //get current date in DD-MM-YYYY format
-	//convert date to YYYY-MM-DD format correct lexical comparison
+	//convert date to YYYY-MM-DD format for correct lexical comparison
 	static void DateToYMD(char *dt);
 };
 

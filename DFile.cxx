@@ -31,8 +31,8 @@ char* DFile::paths[2];
 void DFile::OpenR(const char* name)
 {
 	fl = fopen(name, "r");
-	if(!fl) {
-		fl = fopen(name, "w");
+	if(!fl) { //the file don't exists
+		fl = fopen(name, "w"); //create empty file
 		if(!fl)
 			throw FileError(name, _("Couldn't open."));
 		printf(_("Created new file.\n"));

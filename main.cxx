@@ -31,8 +31,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "DGraph.H"
 #include "DError.H"
 
+#if RUN_UTESTS
+#include <CppUTest/CommandLineTestRunner.h>
+#include "DUTest.cxx"
+#endif
+
 int main(int argc, char** argv)
 {
+#if RUN_UTESTS
+	CommandLineTestRunner::RunAllTests(argc, argv);
+#endif
 	DFile::SetPaths(); //set paths for dictionary and backup files
 	DFile::MakeBackup(); //create backup file
 	struct option const longopts[] =
@@ -74,6 +82,7 @@ int main(int argc, char** argv)
 					if(argv[optind+1] != 0)
 						ps->WStatus(argv[optind+1]);
 					word_list.Add(ps);
+					delete ps;
 					word_list.WriteToFile();
 					return 0;
 				}
