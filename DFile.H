@@ -51,7 +51,7 @@ public:
 	void Date(const char *ns);
 	const ParsedStr& operator=(const char *s);
 	//dates comparison
-	static const int CmpDates(const char *d1, const char *d2);
+	static const int CompareDates(const char *d1, const char *d2);
 	static bool IsCorrectString(const char *s);
 private:
 	void Parse(const char *s); //make all parts by source string

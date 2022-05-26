@@ -111,15 +111,15 @@ TEST(ParsedStrClass, TooLongDate)
 	ParsedStr ps;
 	CHECK_FALSE(ps.IsCorrectString(arr));
 }
-//method CmpDates
+//method CompareDates
 TEST(ParsedStrClass, CompareDifferentDates)
 {
-	CHECK_FALSE(ParsedStr::CmpDates("10-01-2022", "11-02-2022") == 0);
+	CHECK_FALSE(ParsedStr::CompareDates("10-01-2022", "11-02-2022") == 0);
 }
 
 TEST(ParsedStrClass, CompareSameDates)
 {
-	CHECK(ParsedStr::CmpDates("10-01-2022", "10-01-2022") == 0);
+	CHECK(ParsedStr::CompareDates("10-01-2022", "10-01-2022") == 0);
 }
 /*
 TEST(ParsedStrClass, ChangeFormatOfDate)

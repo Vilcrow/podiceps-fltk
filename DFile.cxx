@@ -301,7 +301,7 @@ const ParsedStr& ParsedStr::operator=(const char *s)
 	return *this;
 }
 
-const int ParsedStr::CmpDates(const char *d1, const char *d2)
+const int ParsedStr::CompareDates(const char *d1, const char *d2)
 {
 	char date1[dtlen];
 	strncpy(date1, d1, dtlen);
@@ -506,7 +506,7 @@ void WordList::Sort(enum reqpart rp, bool reverse)  //bubble sort
 				cmp = strcmp(left->ps.WStatus(), right->ps.WStatus());
 				break;
 			case rp_dt:
-				cmp = ParsedStr::CmpDates(left->ps.Date(), right->ps.Date());
+				cmp = ParsedStr::CompareDates(left->ps.Date(), right->ps.Date());
 				break;
 			}
 			if(cmp > 0) {
