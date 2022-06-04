@@ -27,7 +27,7 @@ class DTable;
 struct controls { //include pointers to:
 	WordList *word_list; //word list,
 	Fl_Input *inpt[5]; //input widgets,
-	Fl_Button *b[6]; //buttons,
+	Fl_Button *b[7]; //buttons,
 	Fl_Output *msg; //field for messages,
 	DTable *table; //table
 };
