@@ -1,5 +1,5 @@
 /*
-podiceps - pocket dictionary
+podiceps-fltk - pocket dictionary
 
 Copyright (C) 2022-2023 S.V.I 'Vilcrow', <vilcrow.net>
 --------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ void start_GUI()
 	Fl::option(Fl::OPTION_ARROW_FOCUS, 0);
 	int win_w = 4*input_w + 2*frame + 20;
 	int win_h = 5*frame + 26*input_h;
-	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, N_("podiceps"));
+	Fl_Double_Window *win = new Fl_Double_Window(win_w, win_h, N_("podiceps-fltk"));
 	int x = frame;
 	int y = frame;
 	controls *ctrl = new controls;

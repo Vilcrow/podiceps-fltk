@@ -1,5 +1,5 @@
 /*
-podiceps - pocket dictionary
+podiceps-fltk - pocket dictionary
 
 Copyright (C) 2022-2023 S.V.I 'Vilcrow', <vilcrow.net>
 --------------------------------------------------------------------------------

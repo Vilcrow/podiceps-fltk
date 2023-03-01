@@ -1,5 +1,5 @@
 /*
-podiceps - pocket dictionary
+podiceps-fltk - pocket dictionary
 
 Copyright (C) 2022-2023 S.V.I 'Vilcrow', <vilcrow.net>
 --------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 void help_page()
 {
-	printf(_("podiceps - pocket dictionary"));
+	printf(_("podiceps-fltk - pocket dictionary"));
 	printf(_("Options:\n"));
 	printf(_("-h - Show this help.\n")); 
 	printf(_("-a [original] [translation] - Add new word.\n")); 

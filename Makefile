@@ -13,14 +13,14 @@ else
 UTFLAGS = -D RUN_UTESTS=0
 endif
 
-podiceps: DError.o DFile.o DHandler.o DGraph.o main.o
+podiceps-fltk: DError.o DFile.o DHandler.o DGraph.o main.o
 	$(CXX) $^ -o $@ $(LFLAGS)
 
 %.o: %.cxx
 	$(CXX) $(UTFLAGS) $(CXXFLAGS) -c $<
 
 clean:
-	rm -f *.o *~ deps.mk podiceps
+	rm -f *.o *~ deps.mk podiceps-fltk
 
 deps.mk: $(wildcard *.cxx) Makefile
 	$(CXX) -MM $(wildcard *.cxx) > $@

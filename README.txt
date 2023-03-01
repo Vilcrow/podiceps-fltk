@@ -1,6 +1,6 @@
 Copyright (C) 2022-2023 S.V.I 'Vilcrow', <vilcrow.net>.
 
-podiceps - a simple program for maintaining a dictionary of foreign words.
+podiceps-fltk - a simple program for maintaining a dictionary of foreign words.
 
 The project was created:
 - to study the C++ programming language(without STL and standards);
